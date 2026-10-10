@@ -8,10 +8,13 @@ final class HtmlTemplate
 
     public static function render(string $html, array $vars = []): string
     {
+        $replacements = [];
         foreach ($vars as $key => $value) {
-            $html = str_replace('{{' . $key . '}}', htmlspecialchars((string)$value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'), $html);
+            $replacements['{{' . $key . '}}'] = htmlspecialchars((string)$value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
         }
-        return self::sanitize($html);
+        // Replace in one pass: user input containing {{otherPlaceholder}} must not
+        // trigger a second interpolation.
+        return self::sanitize(strtr($html, $replacements));
     }
 
     public static function sanitize(string $html): string

@@ -26,6 +26,24 @@ const contribInterceptor = () => {
 	return true
 }
 
+const emailPlaceholders = [
+    {key: 'salutation', description: t('appointments', 'Localized greeting with attendee name')},
+    {key: 'name', description: t('appointments', 'Full name of the attendee')},
+    {key: 'firstName', description: t('appointments', 'First name of the attendee')},
+    {key: 'email', description: t('appointments', 'Email address of the attendee')},
+    {key: 'attendeePhone', description: t('appointments', 'Phone number of the attendee, if provided')},
+    {key: 'date', description: t('appointments', 'Appointment date in the recipient language')},
+    {key: 'time', description: t('appointments', 'Appointment start time')},
+    {key: 'endTime', description: t('appointments', 'Appointment end time')},
+    {key: 'dateTime', description: t('appointments', 'Full appointment date and time')},
+    {key: 'durationMinutes', description: t('appointments', 'Appointment duration in minutes')},
+    {key: 'location', description: t('appointments', 'Appointment location, if provided')},
+    {key: 'organization', description: t('appointments', 'Organization name')},
+    {key: 'organizationEmail', description: t('appointments', 'Organization email address')},
+    {key: 'phone', description: t('appointments', 'Organization phone number')},
+    {key: 'status', description: t('appointments', 'Appointment status (organizer notification only)')},
+]
+
 const cancelPendingOptions = [
 	{value: 0, label: t('appointments', 'No auto-cancel')},
 	{value: 2, label: t('appointments', '2 hours')},
@@ -135,6 +153,18 @@ const cancelPendingOptions = [
 			</template>
 		</ComboInput>
 		<LabelAccordion :label="t('appointments', 'Custom email templates')" :accordion="true">
+            <p class="email-vars-intro">{{ t('appointments', 'Placeholders are replaced automatically in email subjects and HTML bodies. Write them exactly as shown:') }}</p>
+            <div class="email-vars-list">
+                <div v-for="item in emailPlaceholders" :key="item.key" class="email-vars-row">
+                    <code>{{ '{{' + item.key + '}}' }}</code>
+                    <span>{{ item.description }}</span>
+                </div>
+            </div>
+            <p class="email-vars-example">
+                {{ t('appointments', 'Example for an HTML email:') }}
+                <code>&lt;p&gt;Hallo {{ '{{firstName}}' }},&lt;/p&gt; &lt;p&gt;Dein Termin ist am {{ '{{date}}' }} um {{ '{{time}}' }} Uhr.&lt;/p&gt;</code>
+            </p>
+            <p class="email-vars-intro">{{ t('appointments', 'Unavailable values are left blank. Confirmation and cancellation buttons are added automatically when applicable.') }}</p>
 			<ComboInput prop-name="mailBookingSubject" :label="t('appointments', 'Booking request – Subject')" :store="settingsStore"/>
 			<ComboInput type="textarea" prop-name="mailBookingHtml" :label="t('appointments', 'Booking request – HTML')" :store="settingsStore"/>
 			<ComboInput prop-name="mailConfirmedSubject" :label="t('appointments', 'Confirmation – Subject')" :store="settingsStore"/>
@@ -152,5 +182,32 @@ const cancelPendingOptions = [
 </template>
 
 <style scoped>
-
+.email-vars-intro {
+    margin: .65em 0;
+}
+.email-vars-list {
+    display: grid;
+    gap: .35em;
+    margin: .75em 0 1em;
+}
+.email-vars-row {
+    display: flex;
+    gap: 1em;
+    align-items: baseline;
+    flex-wrap: wrap;
+}
+.email-vars-row code {
+    display: inline-block;
+    min-width: 11em;
+    white-space: nowrap;
+}
+.email-vars-row span {
+    flex: 1;
+    min-width: 12em;
+}
+.email-vars-example code {
+    display: block;
+    margin-top: .4em;
+    overflow-wrap: anywhere;
+}
 </style>

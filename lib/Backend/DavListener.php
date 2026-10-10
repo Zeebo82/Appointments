@@ -383,7 +383,15 @@ class DavListener implements IEventListener
             list($org_email, $org_name, $org_phone) = $this->getOrgInfo();
             $tmpl = $this->getEmailTemplate();
 
-            $mailVars = $this->mailVars($to_name, $org_name, $date_time, $to_email, $org_email, $org_phone);
+            $mailVars = MailTemplateVariables::build(
+                $to_name, $org_name, $date_time, $to_email, $org_email, $org_phone,
+                $evt->DTSTART->getDateTime(), $evt->DTEND->getDateTime(),
+                $doc ? $doc->attendeeTimezone
+                    : (isset($evt->{BackendUtils::TZI_PROP}) ? $evt->{BackendUtils::TZI_PROP}->getValue() : 'UTC'),
+                $this->l10N,
+                isset($evt->LOCATION) ? $evt->LOCATION->getValue() : '',
+                isset($evt->DESCRIPTION) ? $this->getPhoneFromDescription($evt->DESCRIPTION->getValue()) : ''
+            );
             $subject = $remType === BackendUtils::REMINDER_TYPE_CANCEL_NOTICE
                 ? $this->l10N->t("Reminder: please confirm your %s appointment", [$org_name])
                 : $this->l10N->t("%s appointment reminder", [$org_name]);
@@ -750,7 +758,15 @@ class DavListener implements IEventListener
 //        \OC::$server->getLogger()->error('DL Debug: M12');
 
         $ext_event_type = -1;
-        $mailVars = $this->mailVars($to_name, $org_name, $date_time, $to_email, $org_email, $org_phone);
+        $mailVars = MailTemplateVariables::build(
+                $to_name, $org_name, $date_time, $to_email, $org_email, $org_phone,
+                $evt->DTSTART->getDateTime(), $evt->DTEND->getDateTime(),
+                $doc ? $doc->attendeeTimezone
+                    : (isset($evt->{BackendUtils::TZI_PROP}) ? $evt->{BackendUtils::TZI_PROP}->getValue() : 'UTC'),
+                $this->l10N,
+                isset($evt->LOCATION) ? $evt->LOCATION->getValue() : '',
+                isset($evt->DESCRIPTION) ? $this->getPhoneFromDescription($evt->DESCRIPTION->getValue()) : ''
+            );
 
         if ($hint === HintVar::APPT_BOOK) {
             // Just booked, send email to the attendee requesting confirmation...
@@ -1228,7 +1244,15 @@ class DavListener implements IEventListener
 
                 $tmpl = $this->getEmailTemplate();
 
-                $orgVars = array_merge($mailVars, ['status' => $om_prefix]);
+                $orgVars = MailTemplateVariables::build(
+                    $to_name, $org_name,
+                    $utils->getDateTimeString($evt_dt, $utz_info, 0, $organizerL10n),
+                    $to_email, $org_email, $org_phone,
+                    $evt_dt, $evt->DTEND->getDateTime(), $utz_info, $organizerL10n,
+                    isset($evt->LOCATION) ? $evt->LOCATION->getValue() : '',
+                    $this->getPhoneFromDescription($om_info)
+                );
+                $orgVars['status'] = $om_prefix;
                 $tmpl->setSubject($this->customSubject($settings, BackendUtils::MAILORGANIZERSUBJECT,
                     $om_prefix . ": " . $to_name . ", "
                     . $utils->getDateTimeString($evt_dt, $utz_info, 1, $organizerL10n), $orgVars));
@@ -1483,12 +1507,6 @@ class DavListener implements IEventListener
         return htmlspecialchars($info, ENT_NOQUOTES);
     }
 
-
-    private function mailVars(string $name, string $org, string $date, string $email, string $orgEmail, string $phone): array
-    {
-        return ['name' => $name, 'organization' => $org, 'dateTime' => $date,
-            'email' => $email, 'organizationEmail' => $orgEmail, 'phone' => $phone];
-    }
 
     private function customSubject(array $settings, string $key, string $fallback, array $vars): string
     {
