@@ -59,6 +59,24 @@ body {
   vertical-align: top;
 }
 
+.srgdev-ncfp-required-marker {
+  color: var(--color-error, #c00);
+  font-weight: 700;
+}
+
+.srgdev-ncfp-required-note {
+  display: block;
+  box-sizing: border-box;
+  width: calc(100% - 2em);
+  max-width: 25em;
+  padding: 0 1.5em;
+  margin: 0 auto 1.5em;
+  font-size: .875em;
+  line-height: 1.4;
+  text-align: left;
+  color: var(--color-text-maxcontrast, #666);
+}
+
 .srgdev-ncfp-in-form-html {
   display: block;
   width: 100%;

@@ -18,6 +18,7 @@
 			f.autocomplete = "on"
 		}, 1000)
 
+		markCustomRequiredFields()
 		const pso = makePso(f.getAttribute("data-pps"))
 		prefillFields(pso)
 		makeDpu(pso)
@@ -41,6 +42,26 @@
 			b.disabled = true;
 			b.textContent = txt
 		}, 900000)
+	}
+
+	function markCustomRequiredFields() {
+		const container = document.getElementById('srgdev-ncfp-main-inputs')
+		if (!container) return
+
+		const fields = container.querySelectorAll('input[data-more="r1"], textarea[data-more="r1"], select[data-more="r1"]')
+		const labels = Array.from(container.querySelectorAll('label[for]'))
+		for (const field of fields) {
+			field.setAttribute('aria-required', 'true')
+			field.setAttribute('aria-describedby', 'srgdev-ncfp-required-note')
+			const label = labels.find(item => item.htmlFor === field.id)
+			if (label && !label.querySelector('.srgdev-ncfp-required-marker')) {
+				const marker = document.createElement('span')
+				marker.className = 'srgdev-ncfp-required-marker'
+				marker.setAttribute('aria-hidden', 'true')
+				marker.textContent = ' *'
+				label.appendChild(marker)
+			}
+		}
 	}
 
 	function resetForm(evt) {

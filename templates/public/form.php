@@ -38,9 +38,9 @@ style('appointments', 'form');
             : $_['appt_no_appointments'], ENT_QUOTES, 'UTF-8') . '</h3>';
     ?>
     <div class="srgdev-ncfp-form-main-cont" id="srgdev-ncfp-main-inputs">
-        <label class="srgdev-ncfp-form-label" for="srgdev-ncfp_sel-dummy"><?php p($_['appt_form_labels']['date']) ?></label>
+        <label class="srgdev-ncfp-form-label" for="srgdev-ncfp_sel-dummy"><?php p($_['appt_form_labels']['date']); ?> <span class="srgdev-ncfp-required-marker" aria-hidden="true">*</span></label>
         <div id="srgdev-ncfp_sel_cont">
-            <input <?php echo $disabled ?>readonly placeholder="<?php p($_['appt_date_placeholder']); ?>" name="dtstr" class="srgdev-ncfp-form-input" id="srgdev-ncfp_sel-dummy">
+            <input <?php echo $disabled ?>readonly aria-required="true" aria-describedby="srgdev-ncfp-required-note" placeholder="<?php p($_['appt_date_placeholder']); ?>" name="dtstr" class="srgdev-ncfp-form-input" id="srgdev-ncfp_sel-dummy">
             <input type="hidden" name="adatetime" style="display:none;" id="srgdev-ncfp_sel-hidden"
             <?php
             // TRANSLATORS Button: meaning go back to previous section. Keep short if possible, abbreviations OK
@@ -60,21 +60,33 @@ style('appointments', 'form');
         $data_h_m_str = 'data-tr-hr="' . htmlspecialchars($data_h, ENT_QUOTES) . '" data-tr-mn="' . htmlspecialchars($data_m, ENT_QUOTES) . '"';
         ?>
         <div id="srgdev-ncfp_dur-cont" <?php echo $data_h_m_str; ?> style="display: none">
-            <label for="srgdev-ncfp_dur-sel" class="srgdev-ncfp-form-label"><?php p($_['appt_duration_label']); ?></label>
-            <select name="appt_dur" required id="srgdev-ncfp_dur-sel" class="srgdev-ncfp-form-input srgdev-ncfp-form-select">
+            <label for="srgdev-ncfp_dur-sel" class="srgdev-ncfp-form-label"><?php p($_['appt_duration_label']); ?> <span class="srgdev-ncfp-required-marker" aria-hidden="true">*</span></label>
+            <select name="appt_dur" required aria-required="true" aria-describedby="srgdev-ncfp-required-note" id="srgdev-ncfp_dur-sel" class="srgdev-ncfp-form-input srgdev-ncfp-form-select">
                 <option value="0" class="srgdev-ncfp-form-option" selected>txt</option>
             </select>
         </div>
         <?php if (isset($_['appt_tlk_type']) && empty($disabled)) echo $_['appt_tlk_type']; ?>
         <?php if ($_['appt_name_mode'] !== 'hidden'): ?>
-            <label for="srgdev-ncfp_fname" class="srgdev-ncfp-form-label"><?php p($_['appt_form_labels']['name']) ?></label>
-            <input name="name" <?php echo $disabled ?>data-field-mode="<?php p($_['appt_name_mode']); ?>" placeholder="<?php p($_['appt_name_placeholder']); ?>" id="srgdev-ncfp_fname" class="srgdev-ncfp-form-input" type="text">
+            <label for="srgdev-ncfp_fname" class="srgdev-ncfp-form-label"><?php p($_['appt_form_labels']['name']); ?><?php if ($_['appt_name_mode'] === 'required'): ?> <span class="srgdev-ncfp-required-marker" aria-hidden="true">*</span><?php endif; ?></label>
+            <input name="name" <?php echo $disabled ?><?php if ($_['appt_name_mode'] === 'required'): ?>required aria-required="true" aria-describedby="srgdev-ncfp-required-note" <?php endif; ?>data-field-mode="<?php p($_['appt_name_mode']); ?>" placeholder="<?php p($_['appt_name_placeholder']); ?>" id="srgdev-ncfp_fname" class="srgdev-ncfp-form-input" type="text">
         <?php endif; ?>
-        <label for="srgdev-ncfp_femail" class="srgdev-ncfp-form-label"><?php p($_['appt_form_labels']['email']); ?></label>
-        <input name="email" <?php echo $disabled ?>placeholder="<?php p($_['appt_email_placeholder']); ?>" id="srgdev-ncfp_femail" class="srgdev-ncfp-form-input" type="email">
+        <label for="srgdev-ncfp_femail" class="srgdev-ncfp-form-label"><?php p($_['appt_form_labels']['email']); ?> <span class="srgdev-ncfp-required-marker" aria-hidden="true">*</span></label>
+        <input name="email" <?php echo $disabled ?>required aria-required="true" aria-describedby="srgdev-ncfp-required-note" placeholder="<?php p($_['appt_email_placeholder']); ?>" id="srgdev-ncfp_femail" class="srgdev-ncfp-form-input" type="email">
         <?php
         if ($_['appt_hide_phone'] === false) {
-            echo '<label for="srgdev-ncfp_fphone" class="srgdev-ncfp-form-label">' . htmlspecialchars($_['appt_form_labels']['phone'], ENT_QUOTES, 'UTF-8') . '</label><input name="phone" ' . $disabled . ' data-field-mode="' . htmlspecialchars($_['appt_phone_mode'], ENT_QUOTES, 'UTF-8') . '" placeholder="' . htmlspecialchars($_['appt_phone_placeholder'], ENT_QUOTES, 'UTF-8') . '" id="srgdev-ncfp_fphone" class="srgdev-ncfp-form-input" type="tel">';
+            $phoneRequired = $_['appt_phone_mode'] === 'required';
+            $phoneMarker = $phoneRequired
+                ? ' <span class="srgdev-ncfp-required-marker" aria-hidden="true">*</span>'
+                : '';
+            $phoneAttrs = $phoneRequired
+                ? ' required aria-required="true" aria-describedby="srgdev-ncfp-required-note"'
+                : '';
+            echo '<label for="srgdev-ncfp_fphone" class="srgdev-ncfp-form-label">'
+                . htmlspecialchars($_['appt_form_labels']['phone'], ENT_QUOTES, 'UTF-8') . $phoneMarker
+                . '</label><input name="phone" ' . $disabled . $phoneAttrs
+                . ' data-field-mode="' . htmlspecialchars($_['appt_phone_mode'], ENT_QUOTES, 'UTF-8')
+                . '" placeholder="' . htmlspecialchars($_['appt_phone_placeholder'], ENT_QUOTES, 'UTF-8')
+                . '" id="srgdev-ncfp_fphone" class="srgdev-ncfp-form-input" type="tel">';
         }
 
         if (empty($disabled)) echo $_['more_html'];
@@ -107,6 +119,7 @@ style('appointments', 'form');
         <?php endif; ?>
     </div>
     </form>
+    <p class="srgdev-ncfp-required-note" id="srgdev-ncfp-required-note"><span class="srgdev-ncfp-required-marker" aria-hidden="true">*</span> <?php p($l->t('Required field')); ?></p>
     <?php if (!empty($_['appt_page_outro'])): ?>
         <div class="srgdev-ncfp-page-html srgdev-ncfp-page-html--below">
             <?php echo $_['appt_page_outro']; ?>

@@ -1,4 +1,5 @@
 { "translations": {
+    "Required field" : "Pflichtfeld",
     "Required" : "Pflichtfeld",
     "Optional" : "Optional",
     "Hidden" : "Ausblenden",

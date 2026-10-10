@@ -1,6 +1,7 @@
 OC.L10N.register(
     "appointments",
     {
+    "Required field" : "Pflichtfeld",
     "Required" : "Pflichtfeld",
     "Optional" : "Optional",
     "Hidden" : "Ausblenden",

@@ -1540,8 +1540,8 @@ class PageController extends Controller
 
             $params['appt_tlk_type'] = '<label for="srgdev-ncfp_talk_type" class="srgdev-ncfp-form-label">'
                 . htmlspecialchars(strip_tags(($video_label)), ENT_NOQUOTES)
-                . '</label>
-<select name="talk_type" required id="srgdev-ncfp_talk_type" class="srgdev-ncfp-form-input srgdev-ncfp-form-select">
+                . ' <span class="srgdev-ncfp-required-marker" aria-hidden="true">*</span></label>
+<select name="talk_type" required aria-required="true" aria-describedby="srgdev-ncfp-required-note" id="srgdev-ncfp_talk_type" class="srgdev-ncfp-form-input srgdev-ncfp-form-select">
     <option value="" disabled selected hidden>'
                 . htmlspecialchars(strip_tags(($video_placeholder)), ENT_NOQUOTES)
                 . '</option>
