@@ -45,6 +45,8 @@ const emailPlaceholders = [
     {key: 'confirmationButtons', description: t('appointments', 'Original Confirm and Cancel buttons (booking request and confirmation reminder only)')},
 ]
 
+const confirmationButtonsHelp = t('appointments', 'Place {{confirmationButtons}} on its own line between HTML blocks in the booking request template to choose where the original buttons appear. Without the marker, the buttons are appended automatically.')
+
 const emailExample = '<p>Hallo ' + '{' + '{firstName}' + '}' + ',</p> <p>Dein Termin ist am ' + '{' + '{date}' + '}' + ' um ' + '{' + '{time}' + '}' + ' Uhr.</p>'
 
 const cancelPendingOptions = [
@@ -167,7 +169,7 @@ const cancelPendingOptions = [
                 {{ t('appointments', 'Example for an HTML email:') }}
                 <code>{{ emailExample }}</code>
             </p>
-            <p class="email-vars-intro">{{ t('appointments', 'Place {{confirmationButtons}} on its own line between HTML blocks in the booking request template to choose where the original buttons appear. Without the marker, the buttons are appended automatically.') }}</p>
+            <p class="email-vars-intro">{{ confirmationButtonsHelp }}</p>
             <p class="email-vars-intro">{{ t('appointments', 'Unavailable values are left blank. Confirmation buttons appear only in emails requiring a response.') }}</p>
 			<ComboInput prop-name="mailBookingSubject" :label="t('appointments', 'Booking request – Subject')" :store="settingsStore"/>
 			<ComboInput type="textarea" prop-name="mailBookingHtml" :label="t('appointments', 'Booking request – HTML')" :store="settingsStore"/>
