@@ -30,6 +30,24 @@ body {
   width: 100%;
 }
 
+// User-configured HTML content belongs above or below the entire booking form,
+// not inline next to it. Match the form's approximate width and text alignment.
+.srgdev-ncfp-page-html {
+  display: block;
+  box-sizing: border-box;
+  width: calc(100% - 2em);
+  max-width: 25em;
+  padding: 0 1.5em;
+  margin: 1em auto;
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+
+.srgdev-ncfp-page-html--below {
+  margin-top: 0;
+  margin-bottom: 2em;
+}
+
 .srgdev-appt-info-cont,
 .srgdev-ncfp-form {
   display: inline-block;

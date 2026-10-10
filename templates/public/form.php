@@ -12,6 +12,13 @@ style('appointments', 'form');
         $disabled = 'disabled ';
     }
     /** @noinspection PhpUndefinedVariableInspection */
+    ?>
+    <?php if (!empty($_['appt_page_intro'])): ?>
+        <div class="srgdev-ncfp-page-html srgdev-ncfp-page-html--above">
+            <?php echo $_['appt_page_intro']; ?>
+        </div>
+    <?php endif; ?>
+    <?php
     print $_['appt_inline_style'] . '<form autocomplete="off" method="POST" class="srgdev-ncfp-form" ' . $disabled . ' id="srgdev-ncfp_frm" data-pps="' . $_['appt_pps'] . '" novalidate data-translations="' . $_['translations'] . '" data-zones="'. $_['zones_file'] .'">
         <h2 class="srgdev-ncfp-form-org">' . htmlentities($_['appt_org_name']) . '</h2>
         <div class="srgdev-ncfp-form-addr">' . $_['appt_org_addr'] . '</div>
@@ -20,7 +27,6 @@ style('appointments', 'form');
             ? $_['appt_form_title']
             : $l->t('No Appointments Available')) . '</h3>'
     ?>
-    <?php echo $_['appt_page_intro']; ?>
     <div class="srgdev-ncfp-form-main-cont" id="srgdev-ncfp-main-inputs">
         <label class="srgdev-ncfp-form-label" for="srgdev-ncfp_sel-dummy"><?php p($_['appt_form_labels']['date']) ?></label>
         <div id="srgdev-ncfp_sel_cont">
@@ -83,5 +89,9 @@ style('appointments', 'form');
         </button>
     </div>
     </form>
-    <?php echo $_['appt_page_outro']; ?>
+    <?php if (!empty($_['appt_page_outro'])): ?>
+        <div class="srgdev-ncfp-page-html srgdev-ncfp-page-html--below">
+            <?php echo $_['appt_page_outro']; ?>
+        </div>
+    <?php endif; ?>
 </div>
