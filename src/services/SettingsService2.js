@@ -1,4 +1,5 @@
 import axios from "@nextcloud/axios";
+import {generateUrl} from "@nextcloud/router";
 import {showError} from "@nextcloud/dialogs"
 import {CK} from "../use/constants"
 
@@ -62,7 +63,7 @@ export default class SettingsService2 {
 		this.cancel(cancelKey)
 		const cancelSource = axios.CancelToken.source()
 		this.#cancelSources[cancelKey] = cancelSource
-		return axios.post('caladd', data, {
+		return axios.post(generateUrl('/apps/appointments/caladd'), data, {
 			cancelToken: cancelSource.token
 		}).then(res => {
 			return {
@@ -133,7 +134,7 @@ export default class SettingsService2 {
 		this.cancel(cancelKey)
 		const cancelSource = axios.CancelToken.source()
 		this.#cancelSources[cancelKey] = cancelSource
-		return axios.post(url, {
+		return axios.post(generateUrl('/apps/appointments/' + url), {
 			a: action,
 			p: pageId,
 			...data

@@ -12,6 +12,7 @@ import {
 	NcActionLink
 } from "@nextcloud/vue"
 import {ref} from "vue"
+import {generateUrl} from "@nextcloud/router"
 
 const settingsStore = useSettingsStore()
 const settings = settingsStore.settings
@@ -49,8 +50,7 @@ const prefilledTypeOptions = [
 const previewLink = ref('#')
 const handlePreviewClick = () => {
 	const testToken = '3b719b44-8ec9-41e9-b161-00fb1515b1ed'
-	previewLink.value = window.location.origin
-			+ window.location.pathname.replace(/\/*$/, '') + '/pub/' + readOnlyProps.token + '/'
+	previewLink.value = generateUrl('/apps/appointments/pub/' + readOnlyProps.token + '/')
 			+ (settings.skipEVS
 					? 'cncf?d=2' + testToken
 					: 'form?sts=0&d=' + testToken);

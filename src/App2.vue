@@ -1,5 +1,6 @@
 <script setup>
 import {reactive} from "vue";
+import {generateUrl} from "@nextcloud/router";
 import {
 	NcContent,
 	NcAppContent,
@@ -54,13 +55,13 @@ const showPage = (pageId, reload = true) => {
 		if (pageId[0] === 'p') {
 			state.contextData = {
 				pageLoading: true,
-				pageUrl: 'form?p=' + pageId + '&v=' + Date.now(),
+				pageUrl: generateUrl('/apps/appointments/form') + '?p=' + encodeURIComponent(pageId) + '&v=' + Date.now(),
 				...pagesStore.getPageById(pageId)
 			}
 		} else {
 			state.contextData = {
 				pageLoading: true,
-				pageUrl: 'dir?p=' + pageId + '&v=' + Date.now(),
+				pageUrl: generateUrl('/apps/appointments/dir') + '?p=' + encodeURIComponent(pageId) + '&v=' + Date.now(),
 				...pagesStore.dirPage
 			}
 		}
