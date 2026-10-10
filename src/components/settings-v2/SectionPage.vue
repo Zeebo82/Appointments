@@ -76,6 +76,7 @@ const handlePreviewClick = () => {
 				:store="settingsStore"/>
 
 		<LabelAccordion :label="t('appointments', 'Custom booking page texts (HTML)')" :accordion="true">
+            <p>{{ t('appointments', 'Images: use HTTPS URLs or local paths starting with /. Allowed: src, alt, title, width, height, loading. Images removed on previous saves must be added again.') }}</p>
 			<ComboInput type="textarea" prop-name="pageIntroHtml" :label="t('appointments', 'Above form')" :store="settingsStore"/>
 			<ComboInput type="textarea" prop-name="pageOutroHtml" :label="t('appointments', 'Below form')" :store="settingsStore"/>
             <ComboInput type="textarea" prop-name="pageBeforeOrganizationHtml" :label="t('appointments', 'Above organization name (inside form)')" :store="settingsStore"/>

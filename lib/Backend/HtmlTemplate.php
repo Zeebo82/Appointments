@@ -3,8 +3,8 @@ namespace OCA\Appointments\Backend;
 
 final class HtmlTemplate
 {
-    private const ALLOWED = ['a','b','blockquote','br','code','div','em','h1','h2','h3','h4','hr','i','li','ol','p','pre','span','strong','u','ul'];
-    private const DROP = ['script','style','iframe','object','embed','form','input','button','svg','math','img','link','meta','base','video','audio','source','textarea','select'];
+    private const ALLOWED = ['a','b','blockquote','br','code','div','em','h1','h2','h3','h4','hr','i','img','li','ol','p','pre','span','strong','u','ul'];
+    private const DROP = ['script','style','iframe','object','embed','form','input','button','svg','math','link','meta','base','video','audio','source','textarea','select'];
 
     public static function render(string $html, array $vars = []): string
     {
@@ -33,6 +33,48 @@ final class HtmlTemplate
         }
         [$before, $after] = explode($marker, $html, 2);
         return [$before, str_replace($marker, '', $after)];
+    }
+
+    /**
+     * Return HTTPS image origins referenced by sanitized HTML. Nextcloud must
+     * allow these specific hosts in the booking page's img-src CSP.
+     *
+     * @return string[]
+     */
+    public static function imageOrigins(string $html): array
+    {
+        $safe = self::sanitize($html);
+        if ($safe === '' || !preg_match_all('~<img\b[^>]*\bsrc="([^"]+)"~i', $safe, $matches)) {
+            return [];
+        }
+        $origins = [];
+        foreach ($matches[1] as $src) {
+            $parts = parse_url(html_entity_decode($src, ENT_QUOTES | ENT_HTML5, 'UTF-8'));
+            if (is_array($parts)
+                && strtolower($parts['scheme'] ?? '') === 'https'
+                && !empty($parts['host'])) {
+                $port = isset($parts['port']) ? ':' . $parts['port'] : '';
+                $origins['https://' . $parts['host'] . $port] = true;
+            }
+        }
+        return array_keys($origins);
+    }
+
+    private static function safeImageSource(string $src): bool
+    {
+        if ($src === '' || strlen($src) > 2048 || preg_match('/[\x00-\x20\x7F\\\\]/', $src)) {
+            return false;
+        }
+        // Local absolute paths are allowed, but not protocol-relative URLs.
+        if (str_starts_with($src, '/')) {
+            return !str_starts_with($src, '//');
+        }
+        $parts = parse_url($src);
+        return is_array($parts)
+            && strtolower($parts['scheme'] ?? '') === 'https'
+            && !empty($parts['host'])
+            && !isset($parts['user'])
+            && !isset($parts['pass']);
     }
 
     public static function sanitize(string $html): string
@@ -65,6 +107,39 @@ final class HtmlTemplate
         if (in_array($tag, self::DROP, true)) { $node->parentNode?->removeChild($node); return; }
         if (!in_array($tag, self::ALLOWED, true)) {
             $node->parentNode?->replaceChild($node->ownerDocument->createTextNode($node->textContent), $node);
+            return;
+        }
+        if ($tag === 'img') {
+            $src = trim($node->getAttribute('src'));
+            if (!self::safeImageSource($src)) {
+                $node->parentNode?->removeChild($node);
+                return;
+            }
+            // srcset, inline CSS, event handlers and other untrusted
+            // attributes must never survive the sanitizer.
+            foreach (iterator_to_array($node->attributes) as $attr) {
+                $key = strtolower($attr->name);
+                if ($key === 'src') {
+                    $node->setAttribute('src', $src);
+                } elseif ($key === 'alt' || $key === 'title') {
+                    if (mb_strlen($attr->value) > 500) {
+                        $node->setAttribute($key, mb_substr($attr->value, 0, 500));
+                    }
+                } elseif ($key === 'width' || $key === 'height') {
+                    $value = trim($attr->value);
+                    if (!ctype_digit($value) || (int)$value < 1 || (int)$value > 4096) {
+                        $node->removeAttributeNode($attr);
+                    }
+                } elseif ($key === 'loading') {
+                    if (!in_array(strtolower($attr->value), ['lazy', 'eager'], true)) {
+                        $node->removeAttributeNode($attr);
+                    }
+                } else {
+                    $node->removeAttributeNode($attr);
+                }
+            }
+            // Keep the full booking URL out of external-image Referer headers.
+            $node->setAttribute('referrerpolicy', 'no-referrer');
             return;
         }
         foreach (iterator_to_array($node->attributes) as $attr) {

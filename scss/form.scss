@@ -77,6 +77,12 @@ body {
   color: var(--color-text-maxcontrast, #666);
 }
 
+.srgdev-ncfp-page-html img,
+.srgdev-ncfp-in-form-html img {
+  max-width: 100%;
+  height: auto;
+}
+
 .srgdev-ncfp-in-form-html {
   display: block;
   width: 100%;

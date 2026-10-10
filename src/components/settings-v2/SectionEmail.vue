@@ -159,6 +159,7 @@ const cancelPendingOptions = [
 		</ComboInput>
 		<LabelAccordion :label="t('appointments', 'Custom email templates')" :accordion="true">
             <p class="email-vars-intro">{{ t('appointments', 'Placeholders are replaced automatically in email subjects and HTML bodies. Write them exactly as shown:') }}</p>
+            <p class="email-vars-intro">{{ t('appointments', 'Images in email HTML support HTTPS URLs. Mail clients may block images until recipients allow them.') }}</p>
             <div class="email-vars-list">
                 <div v-for="item in emailPlaceholders" :key="item.key" class="email-vars-row">
                     <code>{{ '{' + '{' + item.key + '}' + '}' }}</code>

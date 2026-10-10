@@ -794,6 +794,7 @@ class PageController extends Controller
         }
 
         $params['application'] = $this->l->t('Appointments');
+        $this->allowCustomImageDomains($tr, $settings);
 
         $tr->setParams($params);
         $tr->setStatus($tr_sts);
@@ -1317,6 +1318,7 @@ class PageController extends Controller
             $tr = new TemplateResponse(Application::APP_ID, $tmpl, [], $render);
         }
 
+        $this->allowCustomImageDomains($tr, $settings);
         $param['appt_inline_style'] = $this->utils->getInlineStyle($uid, $settings);
         $param['appt_text_thank_you'] = $settings[BackendUtils::TEXTTHANKYOU] ?: $this->l->t('Thank you');
         $param['appt_text_error_heading'] = $settings[BackendUtils::TEXTERRORHEADING] ?: $this->l->t('An error has occurred');
@@ -1338,6 +1340,7 @@ class PageController extends Controller
         }
 
         $settings = $this->utils->getUserSettings();
+        $this->allowCustomImageDomains($tr, $settings);
 
         $ft = $settings[BackendUtils::PSN_FORM_TITLE];
         $org_name = $settings[BackendUtils::ORG_NAME];
@@ -1711,6 +1714,39 @@ class PageController extends Controller
             }
         }
         return $rtn . '|' . $i . '|' . $c;
+    }
+
+    /**
+     * Only allow explicitly configured HTTPS image origins. Local URLs are
+     * covered by Nextcloud's existing 'self' image policy.
+     */
+    private function allowCustomImageDomains(Response $response, array $settings): void
+    {
+        $keys = [
+            BackendUtils::PAGEINTROHTML, BackendUtils::PAGEOUTROHTML,
+            BackendUtils::PAGEBEFOREORGHTML, BackendUtils::PAGEBEFOREFORMTITLEHTML,
+            BackendUtils::PAGEBEFOREBUTTONHTML, BackendUtils::PAGEAFTERBUTTONHTML,
+            BackendUtils::PAGEPENDINGHTML, BackendUtils::PAGECONFIRMEDHTML,
+            BackendUtils::PAGECANCELLEDHTML, BackendUtils::PSN_FORM_FINISH_TEXT,
+        ];
+        $origins = [];
+        foreach ($keys as $key) {
+            foreach (\OCA\Appointments\Backend\HtmlTemplate::imageOrigins((string)($settings[$key] ?? '')) as $origin) {
+                $origins[$origin] = true;
+            }
+        }
+        if (!$origins) {
+            return;
+        }
+
+        $csp = $response->getContentSecurityPolicy();
+        if ($csp === null) {
+            $csp = new ContentSecurityPolicy();
+        }
+        foreach (array_keys($origins) as $origin) {
+            $csp->addAllowedImageDomain($origin);
+        }
+        $response->setContentSecurityPolicy($csp);
     }
 
     private function getPublicTemplate(string $templateName): PublicTemplateResponse

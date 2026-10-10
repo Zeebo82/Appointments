@@ -1,6 +1,8 @@
 OC.L10N.register(
     "appointments",
     {
+    "Images: use HTTPS URLs or local paths starting with /. Allowed: src, alt, title, width, height, loading. Images removed on previous saves must be added again." : "Bilder: HTTPS-URLs oder lokale Pfade, die mit / beginnen. Erlaubt: src, alt, title, width, height, loading. Beim früheren Speichern entfernte Bilder bitte erneut einfügen.",
+    "Images in email HTML support HTTPS URLs. Mail clients may block images until recipients allow them." : "Bilder in HTML-E-Mails können über HTTPS eingebunden werden. E-Mail-Programme können externe Bilder zunächst blockieren.",
     "Original Confirm and Cancel buttons (booking request and confirmation reminder only)" : "Originalschaltflächen „Bestätigen“ und „Absagen“ (nur Buchungsanfrage und Bestätigungserinnerung)",
     "Place {{confirmationButtons}} on its own line between HTML blocks in the booking request template to choose where the original buttons appear. Without the marker, the buttons are appended automatically." : "Platziere {{confirmationButtons}} in einer eigenen Zeile zwischen HTML-Blöcken der Buchungsanfrage, um die Position der Originalschaltflächen festzulegen. Ohne den Platzhalter werden die Schaltflächen automatisch angefügt.",
     "Unavailable values are left blank. Confirmation buttons appear only in emails requiring a response." : "Nicht verfügbare Angaben bleiben leer. Bestätigungsschaltflächen erscheinen nur in E-Mails, die eine Antwort erfordern.",

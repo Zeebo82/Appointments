@@ -23,6 +23,8 @@ jobs:
           find lib appinfo templates -name '*.php' -print0 | xargs -0 -n 1 php -l
       - name: Test email template variables
         run: php -d zend.assertions=1 -d assert.exception=1 tests/mail_template_variables_smoke.php
+      - name: Test safe HTML images
+        run: php -d zend.assertions=1 -d assert.exception=1 tests/html_template_images_smoke.php
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
