@@ -26,7 +26,7 @@ style('appointments', 'form');
     <?php endif; ?>
     <?php
     print '<h2 class="srgdev-ncfp-form-org">' . htmlentities($_['appt_org_name']) . '</h2>
-        <div class="srgdev-ncfp-form-addr">' . $_['appt_org_addr'] . '</div>
+        <div class="srgdev-ncfp-form-addr">' . $_['appt_org_addr'] . '</div>';
     ?>
     <?php if (!empty($_['appt_before_form_title'])): ?>
         <div class="srgdev-ncfp-in-form-html"><?php echo $_['appt_before_form_title']; ?></div>
