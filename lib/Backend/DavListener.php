@@ -383,37 +383,26 @@ class DavListener implements IEventListener
             list($org_email, $org_name, $org_phone) = $this->getOrgInfo();
             $tmpl = $this->getEmailTemplate();
 
-            $tmpl->addHeading(" "); // spacer
-            $tmpl->addBodyText(...$this->formatEmailBodyHtml([
-                // TRANSLATORS First line of email, Ex: Dear {{Customer Name}},
-                $this->l10N->t("Dear %s,", [$to_name])
-            ]));
-
-            if ($remType === BackendUtils::REMINDER_TYPE_CANCEL_NOTICE) {
-
-                $tmpl->setSubject(
-                // TRANSLATORS Email subject asking an attendee to confirm a pending appointment, Ex: Reminder: please confirm your {{Organization Name}} appointment
-                    $this->l10N->t("Reminder: please confirm your %s appointment", [$org_name])
-                );
-
-                $confirmWindow = $settings[BackendUtils::EML_CANCEL_PENDING_HOURS] - max(1, floor($remInfo['seconds'] / 3600));
-
-                $tmpl->addBodyText(...$this->formatEmailBodyHtml([
-                    // TRANSLATORS Part of email body, Ex: Important: If not confirmed within 2 hours, this appointment will be automatically cancelled.
-                    $this->l10N->n('Important: If not confirmed within %n hour, this appointment will be automatically cancelled.', 'Important: If not confirmed within %n hours, this appointment will be automatically cancelled.', $confirmWindow)
-                ]));
-
-            } else {
-                // TRANSLATORS Subject for email, Ex: {{Organization Name}} appointment reminder
-                $tmpl->setSubject($this->l10N->t("%s appointment reminder", [$org_name]));
-
-                $tmpl->addBodyText(...$this->formatEmailBodyHtml([
-                    !empty($org_phone)
-                        // TRANSLATORS Main part of email (if organization phone number is provided), Ex: This is a reminder from {{Organization Name}} about your upcoming appointment on {{Date And Time}}. If you need to reschedule, please call {{Organization Phone}}.
-                        ? $this->l10N->t('This is a reminder from %1$s about your upcoming appointment on %2$s. If you need to reschedule, please call %3$s.', [$org_name, $date_time, $org_phone])
-                        // TRANSLATORS Main part of email (if organization phone number is missing), Ex: This is a reminder from {{Organization Name}} about your upcoming appointment on {{Date And Time}}. If you need to reschedule, please write to {{Organization Email}}.
-                        : $this->l10N->t('This is a reminder from %1$s about your upcoming appointment on %2$s. If you need to reschedule, please write to %3$s.', [$org_name, $date_time, $org_email])
-                ]));
+            $mailVars = $this->mailVars($to_name, $org_name, $date_time, $to_email, $org_email, $org_phone);
+            $subject = $remType === BackendUtils::REMINDER_TYPE_CANCEL_NOTICE
+                ? $this->l10N->t("Reminder: please confirm your %s appointment", [$org_name])
+                : $this->l10N->t("%s appointment reminder", [$org_name]);
+            $tmpl->setSubject($this->customSubject($settings, BackendUtils::MAILREMINDERSUBJECT, $subject, $mailVars));
+            $tmpl->addHeading(" ");
+            if (!$this->customBody($tmpl, $settings, BackendUtils::MAILREMINDERHTML, $mailVars)) {
+                $tmpl->addBodyText(...$this->formatEmailBodyHtml([$this->l10N->t("Dear %s,", [$to_name])]));
+                if ($remType === BackendUtils::REMINDER_TYPE_CANCEL_NOTICE) {
+                    $confirmWindow = $settings[BackendUtils::EML_CANCEL_PENDING_HOURS] - max(1, floor($remInfo['seconds'] / 3600));
+                    $tmpl->addBodyText(...$this->formatEmailBodyHtml([
+                        $this->l10N->n('Important: If not confirmed within %n hour, this appointment will be automatically cancelled.', 'Important: If not confirmed within %n hours, this appointment will be automatically cancelled.', $confirmWindow)
+                    ]));
+                } else {
+                    $tmpl->addBodyText(...$this->formatEmailBodyHtml([
+                        !empty($org_phone)
+                            ? $this->l10N->t('This is a reminder from %1$s about your upcoming appointment on %2$s. If you need to reschedule, please call %3$s.', [$org_name, $date_time, $org_phone])
+                            : $this->l10N->t('This is a reminder from %1$s about your upcoming appointment on %2$s. If you need to reschedule, please write to %3$s.', [$org_name, $date_time, $org_email])
+                    ]));
+                }
             }
 
             $cnl_lnk_url = '';
@@ -761,21 +750,21 @@ class DavListener implements IEventListener
 //        \OC::$server->getLogger()->error('DL Debug: M12');
 
         $ext_event_type = -1;
+        $mailVars = $this->mailVars($to_name, $org_name, $date_time, $to_email, $org_email, $org_phone);
 
         if ($hint === HintVar::APPT_BOOK) {
             // Just booked, send email to the attendee requesting confirmation...
 
             // TRANSLATORS Subject for email, Ex: {{Organization Name}} Appointment (action needed)
-            $tmpl->setSubject($this->l10N->t("%s appointment (action needed)", [$org_name]));
-            $tmpl->addHeading(" "); // spacer
-            $tmpl->addBodyText(...$this->formatEmailBodyHtml([
-                // TRANSLATORS First line of email, Ex: Dear {{Customer Name}},
-                $this->l10N->t("Dear %s,", [$to_name])
-            ]));
-            $tmpl->addBodyText(...$this->formatEmailBodyHtml([
-                // TRANSLATORS Main part of email, Ex: The {{Organization Name}} appointment scheduled for {{Date Time}} is awaiting your confirmation.
-                $this->l10N->t('The %1$s appointment scheduled for %2$s is awaiting your confirmation.', [$org_name, $date_time])
-            ]));
+            $tmpl->setSubject($this->customSubject($settings, BackendUtils::MAILBOOKINGSUBJECT,
+                $this->l10N->t("%s appointment (action needed)", [$org_name]), $mailVars));
+            $tmpl->addHeading(" ");
+            if (!$this->customBody($tmpl, $settings, BackendUtils::MAILBOOKINGHTML, $mailVars)) {
+                $tmpl->addBodyText(...$this->formatEmailBodyHtml([$this->l10N->t("Dear %s,", [$to_name])]));
+                $tmpl->addBodyText(...$this->formatEmailBodyHtml([
+                    $this->l10N->t('The %1$s appointment scheduled for %2$s is awaiting your confirmation.', [$org_name, $date_time])
+                ]));
+            }
 
             list($btn_url, $btn_tkn) = $this->makeBtnInfo(
                 $userId, $pageId, $embed,
@@ -789,11 +778,11 @@ class DavListener implements IEventListener
                 $btn_url . '0' . $btn_tkn
             );
 
-            if (!empty($settings[BackendUtils::EML_VLD_TXT])) {
+            if (empty($settings[BackendUtils::MAILBOOKINGHTML]) && !empty($settings[BackendUtils::EML_VLD_TXT])) {
                 $this->addMoreEmailText($tmpl, $settings[BackendUtils::EML_VLD_TXT]);
             }
 
-            if ($settings[BackendUtils::EML_CANCEL_PENDING_HOURS] > 0) {
+            if (empty($settings[BackendUtils::MAILBOOKINGHTML]) && $settings[BackendUtils::EML_CANCEL_PENDING_HOURS] > 0) {
                 $tmpl->addBodyText(...$this->formatEmailBodyHtml([
                     // TRANSLATORS Part of email body, Ex: Important: If not confirmed within 2 hours, this appointment will be automatically cancelled.
                     $this->l10N->n('Important: If not confirmed within %n hour, this appointment will be automatically cancelled.', 'Important: If not confirmed within %n hours, this appointment will be automatically cancelled.', $settings[BackendUtils::EML_CANCEL_PENDING_HOURS])
@@ -809,13 +798,15 @@ class DavListener implements IEventListener
             // ... or the email validation step is skipped
 
             // TRANSLATORS Subject for email, Ex: {{Organization Name}} Appointment is Confirmed
-            $tmpl->setSubject($this->l10N->t("%s Appointment is confirmed", [$org_name]));
-            $tmpl->addHeading(" "); // spacer
-            $tmpl->addBodyText(...$this->formatEmailBodyHtml([$to_name . ","]));
-            $tmpl->addBodyText(...$this->formatEmailBodyHtml([
-                // TRANSLATORS Main body of email,Ex: Your {{Organization Name}} appointment scheduled for {{Date Time}} is now confirmed.
-                $this->l10N->t('Your %1$s appointment scheduled for %2$s is now confirmed.', [$org_name, $date_time])
-            ]));
+            $tmpl->setSubject($this->customSubject($settings, BackendUtils::MAILCONFIRMEDSUBJECT,
+                $this->l10N->t("%s Appointment is confirmed", [$org_name]), $mailVars));
+            $tmpl->addHeading(" ");
+            if (!$this->customBody($tmpl, $settings, BackendUtils::MAILCONFIRMEDHTML, $mailVars)) {
+                $tmpl->addBodyText(...$this->formatEmailBodyHtml([$to_name . ","]));
+                $tmpl->addBodyText(...$this->formatEmailBodyHtml([
+                    $this->l10N->t('Your %1$s appointment scheduled for %2$s is now confirmed.', [$org_name, $date_time])
+                ]));
+            }
 
             // add cancellation link
             list($btn_url, $btn_tkn) = $this->makeBtnInfo(
@@ -848,9 +839,9 @@ class DavListener implements IEventListener
                 }
             }
 
-            if (!empty($settings[BackendUtils::EML_CNF_TXT])) {
+            if (empty($settings[BackendUtils::MAILCONFIRMEDHTML]) && !empty($settings[BackendUtils::EML_CNF_TXT])) {
                 $this->addMoreEmailText($tmpl, $settings[BackendUtils::EML_CNF_TXT]);
-            } elseif (isset($evt->LOCATION) && filter_var($evt->LOCATION->getValue(), FILTER_VALIDATE_URL) !== false) {
+            } elseif (empty($settings[BackendUtils::MAILCONFIRMEDHTML]) && isset($evt->LOCATION) && filter_var($evt->LOCATION->getValue(), FILTER_VALIDATE_URL) !== false) {
                 $locationUrl = $evt->LOCATION->getValue();
                 $tmpl->addBodyText(...$this->formatEmailBodyHtml([
                     $this->l10N->t('Location: ') . '<a href="' . $locationUrl . '">' . $locationUrl . '</a>',
@@ -867,24 +858,17 @@ class DavListener implements IEventListener
         } elseif ($hint === HintVar::APPT_CANCEL || $hint === HintVar::APPT_AUTO_CANCELL || $isDelete) {
             // Canceled or deleted
 
-            if ($hint !== HintVar::APPT_NONE) {
-                // Cancelled by the attendee (via the email link)
-
-                // TRANSLATORS Subject for email, Ex: {{Organization Name}} Appointment is Canceled
-                $tmpl->setSubject($this->l10N->t("%s Appointment is canceled", [$org_name]));
-            } else {
-                // Cancelled/deleted by the organizer
-
-                // TRANSLATORS Subject for email, Ex: {{Organization Name}} Appointment Status Changed
-                $tmpl->setSubject($this->l10N->t("%s appointment status changed", [$org_name]));
+            $subject = $hint !== HintVar::APPT_NONE
+                ? $this->l10N->t("%s Appointment is canceled", [$org_name])
+                : $this->l10N->t("%s appointment status changed", [$org_name]);
+            $tmpl->setSubject($this->customSubject($settings, BackendUtils::MAILCANCELLEDSUBJECT, $subject, $mailVars));
+            $tmpl->addHeading(" ");
+            if (!$this->customBody($tmpl, $settings, BackendUtils::MAILCANCELLEDHTML, $mailVars)) {
+                $tmpl->addBodyText(...$this->formatEmailBodyHtml([$to_name . ","]));
+                $tmpl->addBodyText(...$this->formatEmailBodyHtml([
+                    $this->l10N->t('Your %1$s appointment scheduled for %2$s is now canceled.', [$org_name, $date_time])
+                ]));
             }
-            $tmpl->addHeading(" "); // spacer
-
-            $tmpl->addBodyText(...$this->formatEmailBodyHtml([$to_name . ","]));
-            $tmpl->addBodyText(...$this->formatEmailBodyHtml([
-                // TRANSLATORS Main body of email,Ex: Your {{Organization Name}} appointment scheduled for {{Date Time}} is now canceled.
-                $this->l10N->t('Your %1$s appointment scheduled for %2$s is now canceled.', [$org_name, $date_time])
-            ]));
             $is_cancelled = true;
 
             if ($settings[BackendUtils::EML_MCNCL] && $hint !== HintVar::APPT_NONE) {
@@ -912,16 +896,15 @@ class DavListener implements IEventListener
 
         } elseif ($hint === HintVar::APPT_TYPE_CHANGE) {
 
-            $tmpl->setSubject($this->l10N->t("%s Appointment update", [$org_name]));
-            $tmpl->addHeading(" "); // spacer
-            $tmpl->addBodyText(...$this->formatEmailBodyHtml([
-                // TRANSLATORS First line of email, Ex: Dear {{Customer Name}},
-                $this->l10N->t("Dear %s,", [$to_name])
-            ]));
-            $tmpl->addBodyText(...$this->formatEmailBodyHtml([
-                // TRANSLATORS Main part of email
-                $this->l10N->t("Your appointment details have changed. Please review information below.")
-            ]));
+            $tmpl->setSubject($this->customSubject($settings, BackendUtils::MAILUPDATEDSUBJECT,
+                $this->l10N->t("%s Appointment update", [$org_name]), $mailVars));
+            $tmpl->addHeading(" ");
+            if (!$this->customBody($tmpl, $settings, BackendUtils::MAILUPDATEDHTML, $mailVars)) {
+                $tmpl->addBodyText(...$this->formatEmailBodyHtml([$this->l10N->t("Dear %s,", [$to_name])]));
+                $tmpl->addBodyText(...$this->formatEmailBodyHtml([
+                    $this->l10N->t("Your appointment details have changed. Please review information below.")
+                ]));
+            }
 
             list($btn_url, $btn_tkn) = $this->makeBtnInfo(
                 $userId, $pageId, $embed,
@@ -956,16 +939,15 @@ class DavListener implements IEventListener
             // Organizer or External Action (something changed...)
 
             // TRANSLATORS Subject for email, Ex: {{Organization Name}} appointment status update
-            $tmpl->setSubject($this->l10N->t("%s Appointment update", [$org_name]));
-            $tmpl->addHeading(" "); // spacer
-            $tmpl->addBodyText(...$this->formatEmailBodyHtml([
-                // TRANSLATORS First line of email, Ex: Dear {{Customer Name}},
-                $this->l10N->t("Dear %s,", [$to_name])
-            ]));
-            $tmpl->addBodyText(...$this->formatEmailBodyHtml([
-                // TRANSLATORS Main part of email
-                $this->l10N->t("Your appointment details have changed. Please review information below.")
-            ]));
+            $tmpl->setSubject($this->customSubject($settings, BackendUtils::MAILUPDATEDSUBJECT,
+                $this->l10N->t("%s Appointment update", [$org_name]), $mailVars));
+            $tmpl->addHeading(" ");
+            if (!$this->customBody($tmpl, $settings, BackendUtils::MAILUPDATEDHTML, $mailVars)) {
+                $tmpl->addBodyText(...$this->formatEmailBodyHtml([$this->l10N->t("Dear %s,", [$to_name])]));
+                $tmpl->addBodyText(...$this->formatEmailBodyHtml([
+                    $this->l10N->t("Your appointment details have changed. Please review information below.")
+                ]));
+            }
 
             $pst = $att->parameters['PARTSTAT']->getValue();
 
@@ -1246,10 +1228,14 @@ class DavListener implements IEventListener
 
                 $tmpl = $this->getEmailTemplate();
 
-                $tmpl->setSubject($om_prefix . ": " . $to_name . ", "
-                    . $utils->getDateTimeString($evt_dt, $utz_info, 1, $organizerL10n));
-                $tmpl->addHeading(" "); // spacer
-                $tmpl->addBodyText(...$this->formatEmailBodyHtml([$om_prefix]));
+                $orgVars = array_merge($mailVars, ['status' => $om_prefix]);
+                $tmpl->setSubject($this->customSubject($settings, BackendUtils::MAILORGANIZERSUBJECT,
+                    $om_prefix . ": " . $to_name . ", "
+                    . $utils->getDateTimeString($evt_dt, $utz_info, 1, $organizerL10n), $orgVars));
+                $tmpl->addHeading(" ");
+                if (!$this->customBody($tmpl, $settings, BackendUtils::MAILORGANIZERHTML, $orgVars)) {
+                    $tmpl->addBodyText(...$this->formatEmailBodyHtml([$om_prefix]));
+                }
                 $tmpl->addBodyListItem(...$this->formatEmailListItem(
                     $utils->getDateTimeString($evt_dt, $utz_info, 0, $organizerL10n)));
                 $ic = 0;
@@ -1495,6 +1481,30 @@ class DavListener implements IEventListener
             }
         }
         return htmlspecialchars($info, ENT_NOQUOTES);
+    }
+
+
+    private function mailVars(string $name, string $org, string $date, string $email, string $orgEmail, string $phone): array
+    {
+        return ['name' => $name, 'organization' => $org, 'dateTime' => $date,
+            'email' => $email, 'organizationEmail' => $orgEmail, 'phone' => $phone];
+    }
+
+    private function customSubject(array $settings, string $key, string $fallback, array $vars): string
+    {
+        if (trim($settings[$key] ?? '') === '') return $fallback;
+        return trim(html_entity_decode(strip_tags(HtmlTemplate::render($settings[$key], $vars)), ENT_QUOTES | ENT_HTML5, 'UTF-8'));
+    }
+
+    private function customBody(IEMailTemplate $template, array $settings, string $key, array $vars): bool
+    {
+        if (trim($settings[$key] ?? '') === '') return false;
+        $html = HtmlTemplate::render($settings[$key], $vars);
+        $plain = trim(html_entity_decode(strip_tags(str_ireplace(
+            ['</p>', '</div>', '</li>', '<br>', '<br/>', '<br />'], "\n", $html)),
+            ENT_QUOTES | ENT_HTML5, 'UTF-8'));
+        $template->addBodyText(...$this->formatEmailBodyHtml([$html, $plain]));
+        return true;
     }
 
     private function getEmailTemplate()
