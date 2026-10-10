@@ -140,13 +140,7 @@
 	function formSubmit(e) {
 		let lee = 0
 
-		const translations = {}
-		const trStr = document.getElementById("srgdev-ncfp_frm").getAttribute("data-translations")
-		// trStr looks something like this "key1:translation1,key2:transaltion2,..."
-		trStr.split(',').forEach(ps => {
-			const pair = ps.split(":")
-			translations[pair[0]] = pair[1]
-		})
+		const translations = JSON.parse(document.getElementById("srgdev-ncfp_frm").getAttribute("data-translations") || '{}')
 
 		let el = document.getElementById("srgdev-ncfp_fbtn")
 		if (el.disabled === true) {
@@ -179,7 +173,8 @@
 		}
 
 		el = document.getElementById("srgdev-ncfp_fname")
-		if (el.value.length < 2) {
+		if (el !== null && ((el.getAttribute('data-field-mode') === 'required' && el.value.trim().length < 2)
+			|| (el.value.trim() !== '' && el.value.trim().length < 2))) {
 			el.setCustomValidity(translations['name_required']);
 			el.addEventListener("input", clearFormErr, false)
 			if (lee === 0) el.reportValidity()
@@ -195,7 +190,8 @@
 		// Phone field is optional
 		// match [0-9], '.()-+,/' and ' ' (space) at least 9 digits
 		el = document.getElementById("srgdev-ncfp_fphone")
-		if (el !== null && (el.value === '' || el.value.length < 9 || /^[0-9 .()\-+,/]*$/.test(el.value) === false)) {
+		if (el !== null && ((el.getAttribute('data-field-mode') === 'required' && el.value.trim() === '')
+			|| (el.value.trim() !== '' && (el.value.length < 9 || /^[0-9 .()\-+,/]*$/.test(el.value) === false)))) {
 			el.setCustomValidity(translations['phone_required']);
 			el.addEventListener("input", clearFormErr, false)
 			if (lee === 0) el.reportValidity()

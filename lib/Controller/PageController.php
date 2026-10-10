@@ -921,14 +921,23 @@ class PageController extends Controller
         }
 
         $settings = $this->utils->getUserSettings();
-        $hide_phone = $settings[BackendUtils::PSN_HIDE_TEL];
+        $nameMode = $settings[BackendUtils::NAMEFIELDMODE];
+        $phoneMode = $settings[BackendUtils::PHONEFIELDMODE];
+        $hide_phone = $phoneMode === 'hidden'
+            || ($phoneMode === 'legacy' && $settings[BackendUtils::PSN_HIDE_TEL]);
+        $phoneRequired = $phoneMode === 'required' || ($phoneMode === 'legacy' && !$hide_phone);
 
         $post = $this->request->getParams();
 
-        // this will pass validation
+        // Hidden fields do not accept submitted values.
         if ($hide_phone) {
-            $post['phone'] = "1234567890";
+            $post['phone'] = '';
         }
+        if ($nameMode === 'hidden') {
+            $post['name'] = '';
+        }
+        $post['name'] = trim((string)($post['name'] ?? ''));
+        $post['phone'] = trim((string)($post['phone'] ?? ''));
 
         // Ref: https://github.com/SergeyMosin/Appointments/issues/698
         // TODO: Only encrypt title hash and send title plain text ???
@@ -941,13 +950,15 @@ class PageController extends Controller
             || !isset($post['appt_dur']) || strlen($post['appt_dur']) !== 1
             || preg_match('/[^0-7]/u', $post['appt_dur'])
 
-            || !isset($post['name']) || strlen($post['name']) > 64
-            || strlen($post['name']) < 2
+            || strlen($post['name']) > 64
+            || ($nameMode === 'required' && mb_strlen($post['name']) < 2)
+            || ($post['name'] !== '' && mb_strlen($post['name']) < 2)
             || preg_match('/[^\PC ]/u', $post['name'])
 
-            || !isset($post['phone']) || strlen($post['phone']) > 32
-            || strlen($post['phone']) < 4
-            || preg_match('/[^0-9 .()\-+,\/]/', $post['phone'])
+            || strlen($post['phone']) > 32
+            || ($phoneRequired && !$hide_phone && $post['phone'] === '')
+            || ($post['phone'] !== '' && strlen($post['phone']) < 9)
+            || ($post['phone'] !== '' && preg_match('/[^0-9 .()\-+,\/]/', $post['phone']))
 
             || !isset($post['email']) || strlen($post['email']) > 128
             || strlen($post['email']) < 4
@@ -972,8 +983,8 @@ class PageController extends Controller
             }
         }
 
-        if ($hide_phone) {
-            $post['phone'] = "";
+        if ($post['name'] === '') {
+            $post['name'] = $this->l->t('Guest');
         }
         $post['name'] = htmlspecialchars(strip_tags($post['name']), ENT_NOQUOTES);
 
@@ -1307,6 +1318,10 @@ class PageController extends Controller
         }
 
         $param['appt_inline_style'] = $this->utils->getInlineStyle($uid, $settings);
+        $param['appt_text_thank_you'] = $settings[BackendUtils::TEXTTHANKYOU] ?: $this->l->t('Thank you');
+        $param['appt_text_error_heading'] = $settings[BackendUtils::TEXTERRORHEADING] ?: $this->l->t('An error has occurred');
+        $param['appt_text_try_again'] = $settings[BackendUtils::TEXTTRYAGAIN] ?: $this->l->t('Please try again later');
+        $param['appt_text_contact_us'] = $settings[BackendUtils::TEXTCONTACTUS] ?: $this->l->t('Please contact us directly at');
 
         $tr->setParams($param);
         $tr->setStatus($rs);
@@ -1339,6 +1354,14 @@ class PageController extends Controller
             $ft = $this->l->t('Book Your Appointment');
         }
 
+        $nameMode = $settings[BackendUtils::NAMEFIELDMODE];
+        $phoneMode = $settings[BackendUtils::PHONEFIELDMODE];
+        $hidePhone = $phoneMode === 'hidden'
+            || ($phoneMode === 'legacy' && $settings[BackendUtils::PSN_HIDE_TEL]);
+        $text = static function (string $override, string $fallback): string {
+            return $override !== '' ? $override : $fallback;
+        };
+
         $params = [
             'appt_sel_opts' => '',
             'appt_state' => '0',
@@ -1347,6 +1370,20 @@ class PageController extends Controller
             'appt_form_title' => $ft,
             'appt_page_intro' => \OCA\Appointments\Backend\HtmlTemplate::render($settings[BackendUtils::PAGEINTROHTML]),
             'appt_page_outro' => \OCA\Appointments\Backend\HtmlTemplate::render($settings[BackendUtils::PAGEOUTROHTML]),
+            'appt_before_org' => \OCA\Appointments\Backend\HtmlTemplate::render($settings[BackendUtils::PAGEBEFOREORGHTML]),
+            'appt_before_form_title' => \OCA\Appointments\Backend\HtmlTemplate::render($settings[BackendUtils::PAGEBEFOREFORMTITLEHTML]),
+            'appt_before_button' => \OCA\Appointments\Backend\HtmlTemplate::render($settings[BackendUtils::PAGEBEFOREBUTTONHTML]),
+            'appt_after_button' => \OCA\Appointments\Backend\HtmlTemplate::render($settings[BackendUtils::PAGEAFTERBUTTONHTML]),
+            'appt_no_appointments' => $text($settings[BackendUtils::TEXTNOAPPOINTMENTS], $this->l->t('No Appointments Available')),
+            'appt_date_placeholder' => $text($settings[BackendUtils::TEXTDATETIMEPLACEHOLDER], $this->l->t('Select Date & Time')),
+            'appt_name_placeholder' => $text($settings[BackendUtils::TEXTNAMEPLACEHOLDER], $this->l->t('Enter full name')),
+            'appt_email_placeholder' => $text($settings[BackendUtils::TEXTEMAILPLACEHOLDER], $this->l->t('Enter email')),
+            'appt_phone_placeholder' => $text($settings[BackendUtils::TEXTPHONEPLACEHOLDER], $this->l->t('Enter phone number')),
+            'appt_duration_label' => $text($settings[BackendUtils::TEXTDURATION], $this->l->t('Duration')),
+            'appt_select_date_title' => $text($settings[BackendUtils::TEXTSELECTDATETIME], $this->l->t('Select Date and Time')),
+            'appt_session_timeout' => $text($settings[BackendUtils::TEXTSESSIONTIMEOUT], $this->l->t('Session Timeout. Reload.')),
+            'appt_name_mode' => $nameMode,
+            'appt_phone_mode' => $phoneMode === 'legacy' ? 'required' : $phoneMode,
             'appt_form_labels' => [
                 'name' => $settings[BackendUtils::FORMNAMELABEL] ?: $this->l->t('Full Name'),
                 'email' => $settings[BackendUtils::FORMEMAILLABEL] ?: $this->l->t('Email'),
@@ -1358,7 +1395,7 @@ class PageController extends Controller
             'appt_gdpr' => '',
             'appt_gdpr_no_chb' => false,
             'appt_inline_style' => $this->utils->getInlineStyle($uid, $settings),
-            'appt_hide_phone' => $settings[BackendUtils::PSN_HIDE_TEL],
+            'appt_hide_phone' => $hidePhone,
             'more_html' => '',
             'application' => $this->l->t('Appointments'),
             'translations' => '',
@@ -1493,10 +1530,10 @@ class PageController extends Controller
         } elseif ($settings[BackendUtils::BBB_ENABLED] === true
             && $settings[BackendUtils::BBB_FORM_ENABLED] === true
         ) {
-            $video_label = $this->l->t('Meeting Type');
-            $video_placeholder = $this->l->t('Select meeting type');
-            $video_no = $this->l->t('In-person meeting');
-            $video_yes = $this->l->t('Online (audio/video)');
+            $video_label = $text($settings[BackendUtils::TEXTMEETINGTYPE], $this->l->t('Meeting Type'));
+            $video_placeholder = $text($settings[BackendUtils::TEXTMEETINGPLACEHOLDER], $this->l->t('Select meeting type'));
+            $video_no = $text($settings[BackendUtils::TEXTINPERSON], $this->l->t('In-person meeting'));
+            $video_yes = $text($settings[BackendUtils::TEXTONLINE], $this->l->t('Online (audio/video)'));
         }
         if ($video_label !== '') {
             // we have a meeting type <select>
@@ -1522,12 +1559,14 @@ class PageController extends Controller
         }
 
         // translations (because we do not have window.t without vue in form.js)
-        $params['translations'] =
-            "name_required:" . $this->l->t('Name is required.') . "," .
-            "email_required:" . $this->l->t('Email is required.') . "," .
-            "phone_required:" . $this->l->t('Phone number is required.') . "," .
-            "required:" . $this->l->t('Required.') . "," .
-            "number_required:" . $this->l->t('Number required.');
+        // JSON avoids ambiguities when configurable validation messages contain commas or colons.
+        $params['translations'] = json_encode([
+            'name_required' => $text($settings[BackendUtils::TEXTNAMEREQUIRED], $this->l->t('Name is required.')),
+            'email_required' => $text($settings[BackendUtils::TEXTEMAILREQUIRED], $this->l->t('Email is required.')),
+            'phone_required' => $text($settings[BackendUtils::TEXTPHONEREQUIRED], $this->l->t('Phone number is required.')),
+            'required' => $text($settings[BackendUtils::TEXTREQUIRED], $this->l->t('Required.')),
+            'number_required' => $text($settings[BackendUtils::TEXTNUMBERREQUIRED], $this->l->t('Number required.')),
+        ], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT);
 
         $params['zones_file'] = $this->urlGenerator->linkTo(Application::APP_ID, 'ajax/zones.js');
 

@@ -28,7 +28,7 @@ echo $_['appt_inline_style'];
             <?php
         } else { ?>
             <p><?php
-                p($l->t("Thank you")); ?></p>
+                p($_['appt_text_thank_you'] ?? $l->t("Thank you")); ?></p>
             <?php
         } ?>
     </div>
