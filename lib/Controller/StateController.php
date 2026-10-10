@@ -395,6 +395,21 @@ class StateController extends Controller
     private function getValidator(string $prop): ?\Closure
     {
         return match ($prop) {
+            BackendUtils::MAILBOOKINGHTML, BackendUtils::MAILCONFIRMEDHTML, BackendUtils::MAILCANCELLEDHTML, BackendUtils::MAILUPDATEDHTML, BackendUtils::MAILREMINDERHTML, BackendUtils::MAILORGANIZERHTML, BackendUtils::PAGEINTROHTML, BackendUtils::PAGEOUTROHTML, BackendUtils::PAGEPENDINGHTML, BackendUtils::PAGECONFIRMEDHTML, BackendUtils::PAGECANCELLEDHTML => function (&$value, $pageId, $key): array {
+                if (!is_string($value) || strlen($value) > 20000) {
+                    return [Http::STATUS_BAD_REQUEST, ''];
+                }
+                $value = \OCA\Appointments\Backend\HtmlTemplate::sanitize($value);
+                return [Http::STATUS_OK, ''];
+            },
+            BackendUtils::MAILBOOKINGSUBJECT, BackendUtils::MAILCONFIRMEDSUBJECT, BackendUtils::MAILCANCELLEDSUBJECT, BackendUtils::MAILUPDATEDSUBJECT, BackendUtils::MAILREMINDERSUBJECT, BackendUtils::MAILORGANIZERSUBJECT, BackendUtils::FORMNAMELABEL, BackendUtils::FORMEMAILLABEL, BackendUtils::FORMPHONELABEL, BackendUtils::FORMDATELABEL, BackendUtils::FORMBUTTONLABEL => function (&$value, $pageId, $key): array {
+                if (!is_string($value) || strlen($value) > 512) {
+                    return [Http::STATUS_BAD_REQUEST, ''];
+                }
+                $value = trim(strip_tags($value));
+                return [Http::STATUS_OK, ''];
+            },
+
 
             BackendUtils::PAGE_ENABLED => function ($value, $pageId, $key): array {
                 if ($value === false) {

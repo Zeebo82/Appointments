@@ -600,7 +600,7 @@ class PageController extends Controller
                             $a_ok = true; // :)
                             // TODO: why ???
                             $a_base = true;
-                            $tr_params['appt_c_more'] = $settings[BackendUtils::PSN_FORM_FINISH_TEXT];
+                            $tr_params['appt_c_more'] = \OCA\Appointments\Backend\HtmlTemplate::render($settings[BackendUtils::PSN_FORM_FINISH_TEXT]);
                         }
                     } else {
                         // link expired
@@ -734,6 +734,16 @@ class PageController extends Controller
             }
         }
 
+        if ($sts === 0) {
+            $textKey = ($action === '1' || $action === '2')
+                ? BackendUtils::PAGECONFIRMEDHTML
+                : ($action === '0' ? BackendUtils::PAGECANCELLEDHTML : '');
+            if ($textKey !== '' && $settings[$textKey] !== '') {
+                $tr_params['appt_c_msg'] = '';
+                $tr_params['appt_c_more'] = \OCA\Appointments\Backend\HtmlTemplate::render(
+                    $settings[$textKey], ['dateTime' => $date_time ?? '']);
+            }
+        }
         return $this->makeCncfResponse($tr_params, $sts, $userId, $settings,
 //            // renderAs=base (embedded or preview when email validation step is skipped
             $a_base === true || $embed === true);
@@ -1266,7 +1276,12 @@ class PageController extends Controller
                     if ($this->mailer->validateMailAddress($em)) {
                         $tmpl = 'public/thanks';
                         $param['appt_c_msg'] = $this->l->t("We have sent an email to %s, please open it and click on the confirmation link to finalize your appointment request", [$em]);
-                        $param['appt_c_more'] = $settings[BackendUtils::PSN_FORM_FINISH_TEXT];
+                        $param['appt_c_more'] = \OCA\Appointments\Backend\HtmlTemplate::render($settings[BackendUtils::PSN_FORM_FINISH_TEXT]);
+                        if ($settings[BackendUtils::PAGEPENDINGHTML] !== '') {
+                            $param['appt_c_more'] = \OCA\Appointments\Backend\HtmlTemplate::render(
+                                $settings[BackendUtils::PAGEPENDINGHTML], ['email' => $em]);
+                            $param['appt_c_msg'] = '';
+                        }
                         $rs = 200;
                     }
                 } else {
@@ -1330,6 +1345,15 @@ class PageController extends Controller
             'appt_org_name' => $org_name,
             'appt_org_addr' => str_replace(array("\r\n", "\n", "\r"), '<br>', $addr),
             'appt_form_title' => $ft,
+            'appt_page_intro' => \OCA\Appointments\Backend\HtmlTemplate::render($settings[BackendUtils::PAGEINTROHTML]),
+            'appt_page_outro' => \OCA\Appointments\Backend\HtmlTemplate::render($settings[BackendUtils::PAGEOUTROHTML]),
+            'appt_form_labels' => [
+                'name' => $settings[BackendUtils::FORMNAMELABEL] ?: $this->l->t('Full Name'),
+                'email' => $settings[BackendUtils::FORMEMAILLABEL] ?: $this->l->t('Email'),
+                'phone' => $settings[BackendUtils::FORMPHONELABEL] ?: $this->l->t('Phone'),
+                'date' => $settings[BackendUtils::FORMDATELABEL] ?: $this->l->t('Date & Time'),
+                'button' => $settings[BackendUtils::FORMBUTTONLABEL] ?: $this->l->t('Book Now'),
+            ],
             'appt_pps' => '',
             'appt_gdpr' => '',
             'appt_gdpr_no_chb' => false,
