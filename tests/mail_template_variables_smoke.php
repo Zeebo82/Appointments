@@ -38,6 +38,38 @@ assert($vars['durationMinutes'] === '45');
 assert($vars['location'] === 'Gemeindehaus');
 assert($vars['attendeePhone'] === '0170 1234567');
 
+// A missing name has an explicit marker in the calendar metadata.
+$anonymous = MailTemplateVariables::build(
+    'Guest', 'Testverein', '15.10.2026, 10:30',
+    'anon@example.test', 'kontakt@example.test', '0203 123',
+    new DateTimeImmutable('2026-10-15 08:30:00 UTC'),
+    new DateTimeImmutable('2026-10-15 09:15:00 UTC'),
+    'TEurope/Berlin', new TestLocalization(), '', '', true
+);
+assert($anonymous['name'] === '');
+assert($anonymous['firstName'] === '');
+assert($anonymous['salutation'] === 'Hello,');
+assertHas('<p>Hello,</p>', HtmlTemplate::render('<p>{{salutation}}</p>', $anonymous));
+
+// A person who really typed "Guest" retains their actual name.
+$actualGuest = MailTemplateVariables::build(
+    'Guest', 'Testverein', '15.10.2026, 10:30',
+    'guest@example.test', 'kontakt@example.test', '0203 123',
+    new DateTimeImmutable('2026-10-15 08:30:00 UTC'),
+    new DateTimeImmutable('2026-10-15 09:15:00 UTC'),
+    'TEurope/Berlin', new TestLocalization()
+);
+assert($actualGuest['name'] === 'Guest');
+assert($actualGuest['salutation'] === 'Dear Guest,');
+
+// Shared footer values use the same HTML sanitizer/placeholder engine.
+$legalFooter = HtmlTemplate::render(
+    '<p>Datenschutz: <a href="https://example.org/privacy">Info</a> – {{organization}}</p><script>alert(1)</script>',
+    $vars
+);
+assertHas('Testverein', $legalFooter);
+if (str_contains($legalFooter, '<script')) throw new RuntimeException('Unsafe footer HTML');
+
 $html = HtmlTemplate::render('<p>Hallo {{name}}, Dein Termin am {{date}} um {{time}} in {{location}}.</p>', $vars);
 assertHas('Hallo Anna Mustermann', $html);
 $oldHtml = HtmlTemplate::render('<p>Hallo {{firstName}},</p>', $vars);

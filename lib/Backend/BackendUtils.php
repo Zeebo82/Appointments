@@ -105,6 +105,7 @@ class BackendUtils
     public const MAILREMINDERHTML = 'mailReminderHtml';
     public const MAILORGANIZERSUBJECT = 'mailOrganizerSubject';
     public const MAILORGANIZERHTML = 'mailOrganizerHtml';
+    public const MAILFOOTERHTML = 'mailFooterHtml';
     public const EML_CANCEL_PENDING_HOURS = 'cancelPendingHours';
     public const EML_NOTIFY_BEFORE_CANCEL_PENDING = 'notifyCancelPending';
 
@@ -395,6 +396,7 @@ class BackendUtils
         // -----
         $doc = $this->getApptDoc($evt);
         $doc->attendeeTimezone = $info['tzi'] ?? 'UTC';
+        $doc->attendeeNameMissing = !empty($info['_name_missing']);
         $doc->title = $title;
         $doc->embed = $info['_embed'];
         $doc->inPersonType = isset($info['type_override']);
@@ -1259,6 +1261,7 @@ class BackendUtils
             self::MAILREMINDERHTML => "",
             self::MAILORGANIZERSUBJECT => "",
             self::MAILORGANIZERHTML => "",
+            self::MAILFOOTERHTML => "",
             self::EML_CANCEL_PENDING_HOURS => 0,
             self::EML_NOTIFY_BEFORE_CANCEL_PENDING => false,
 

@@ -20,6 +20,9 @@ class ApptDocProp extends PropEncoderBase
     public string $bbbPass = '';
     public bool $inPersonType = false;
     public string $attendeeTimezone = 'UTC';
+    // Whether the attendee entered a name at booking time. The calendar
+    // continues to use its required "Guest" fallback independently.
+    public bool $attendeeNameMissing = false;
     public string $description = '';
 
     public string $_evtUid = '';

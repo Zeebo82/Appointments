@@ -23,19 +23,27 @@ final class MailTemplateVariables
         string $timeZone,
         $l10n,
         string $location = '',
-        string $attendeePhone = ''
+        string $attendeePhone = '',
+        bool $attendeeNameMissing = false
     ): array {
         // The booking form contains a single free-text name field. Do not try
         // to guess first names or family names from its contents.
 
         [$date, $time, $endTime] = self::formatParts($start, $end, $timeZone, $l10n);
 
+        // An explicit booking flag is more accurate than treating the word
+        // "Guest" as necessarily anonymous (it might be someone's name).
+        $displayName = $attendeeNameMissing ? '' : $name;
+        $salutation = $attendeeNameMissing
+            ? $l10n->t('Hello,')
+            : $l10n->t('Dear %s,', [$displayName]);
+
         return [
-            'name' => $name,
+            'name' => $displayName,
             // Backwards compatibility with HTML templates saved before 2.8.5.10:
             // the legacy placeholder now means the exact entered name too.
-            'firstName' => $name,
-            'salutation' => $l10n->t('Dear %s,', [$name]),
+            'firstName' => $displayName,
+            'salutation' => $salutation,
             'email' => $attendeeEmail,
             'attendeePhone' => $attendeePhone,
             'dateTime' => $dateTime,

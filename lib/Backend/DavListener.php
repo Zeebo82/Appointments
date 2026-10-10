@@ -390,7 +390,8 @@ class DavListener implements IEventListener
                     : (isset($evt->{BackendUtils::TZI_PROP}) ? $evt->{BackendUtils::TZI_PROP}->getValue() : 'UTC'),
                 $this->l10N,
                 isset($evt->LOCATION) ? $evt->LOCATION->getValue() : '',
-                isset($evt->DESCRIPTION) ? $this->getPhoneFromDescription($evt->DESCRIPTION->getValue()) : ''
+                isset($evt->DESCRIPTION) ? $this->getPhoneFromDescription($evt->DESCRIPTION->getValue()) : '',
+                $doc !== null && $doc->attendeeNameMissing
             );
             $subject = $remType === BackendUtils::REMINDER_TYPE_CANCEL_NOTICE
                 ? $this->l10N->t("Reminder: please confirm your %s appointment", [$org_name])
@@ -422,7 +423,7 @@ class DavListener implements IEventListener
                 $tmpl, $settings, BackendUtils::MAILREMINDERHTML, $mailVars,
                 $reminderButtons, $reminderButtonsInserted
             )) {
-                $tmpl->addBodyText(...$this->formatEmailBodyHtml([$this->l10N->t("Dear %s,", [$to_name])]));
+                $tmpl->addBodyText(...$this->formatEmailBodyHtml([$mailVars['salutation']]));
                 if ($remType === BackendUtils::REMINDER_TYPE_CANCEL_NOTICE) {
                     $confirmWindow = $settings[BackendUtils::EML_CANCEL_PENDING_HOURS] - max(1, floor($remInfo['seconds'] / 3600));
                     $tmpl->addBodyText(...$this->formatEmailBodyHtml([
@@ -500,7 +501,7 @@ class DavListener implements IEventListener
             }
 
             // everything is ready, send email...
-            $this->finalizeEmailText($tmpl, $cnl_lnk_url);
+            $this->finalizeEmailText($tmpl, $cnl_lnk_url, $settings, $mailVars);
 
             $msg = $mailer->createMessage();
 
@@ -787,7 +788,8 @@ class DavListener implements IEventListener
                     : (isset($evt->{BackendUtils::TZI_PROP}) ? $evt->{BackendUtils::TZI_PROP}->getValue() : 'UTC'),
                 $this->l10N,
                 isset($evt->LOCATION) ? $evt->LOCATION->getValue() : '',
-                isset($evt->DESCRIPTION) ? $this->getPhoneFromDescription($evt->DESCRIPTION->getValue()) : ''
+                isset($evt->DESCRIPTION) ? $this->getPhoneFromDescription($evt->DESCRIPTION->getValue()) : '',
+                $doc !== null && $doc->attendeeNameMissing
             );
 
         if ($hint === HintVar::APPT_BOOK) {
@@ -815,7 +817,7 @@ class DavListener implements IEventListener
                 $tmpl, $settings, BackendUtils::MAILBOOKINGHTML, $mailVars,
                 $bookingButtons, $bookingButtonsInserted
             )) {
-                $tmpl->addBodyText(...$this->formatEmailBodyHtml([$this->l10N->t("Dear %s,", [$to_name])]));
+                $tmpl->addBodyText(...$this->formatEmailBodyHtml([$mailVars['salutation']]));
                 $tmpl->addBodyText(...$this->formatEmailBodyHtml([
                     $this->l10N->t('The %1$s appointment scheduled for %2$s is awaiting your confirmation.', [$org_name, $date_time])
                 ]));
@@ -850,7 +852,7 @@ class DavListener implements IEventListener
                 $this->l10N->t("%s Appointment is confirmed", [$org_name]), $mailVars));
             $tmpl->addHeading(" ");
             if (!$this->customBody($tmpl, $settings, BackendUtils::MAILCONFIRMEDHTML, $mailVars)) {
-                $tmpl->addBodyText(...$this->formatEmailBodyHtml([$to_name . ","]));
+                $tmpl->addBodyText(...$this->formatEmailBodyHtml([$mailVars['salutation']]));
                 $tmpl->addBodyText(...$this->formatEmailBodyHtml([
                     $this->l10N->t('Your %1$s appointment scheduled for %2$s is now confirmed.', [$org_name, $date_time])
                 ]));
@@ -912,7 +914,7 @@ class DavListener implements IEventListener
             $tmpl->setSubject($this->customSubject($settings, BackendUtils::MAILCANCELLEDSUBJECT, $subject, $mailVars));
             $tmpl->addHeading(" ");
             if (!$this->customBody($tmpl, $settings, BackendUtils::MAILCANCELLEDHTML, $mailVars)) {
-                $tmpl->addBodyText(...$this->formatEmailBodyHtml([$to_name . ","]));
+                $tmpl->addBodyText(...$this->formatEmailBodyHtml([$mailVars['salutation']]));
                 $tmpl->addBodyText(...$this->formatEmailBodyHtml([
                     $this->l10N->t('Your %1$s appointment scheduled for %2$s is now canceled.', [$org_name, $date_time])
                 ]));
@@ -948,7 +950,7 @@ class DavListener implements IEventListener
                 $this->l10N->t("%s Appointment update", [$org_name]), $mailVars));
             $tmpl->addHeading(" ");
             if (!$this->customBody($tmpl, $settings, BackendUtils::MAILUPDATEDHTML, $mailVars)) {
-                $tmpl->addBodyText(...$this->formatEmailBodyHtml([$this->l10N->t("Dear %s,", [$to_name])]));
+                $tmpl->addBodyText(...$this->formatEmailBodyHtml([$mailVars['salutation']]));
                 $tmpl->addBodyText(...$this->formatEmailBodyHtml([
                     $this->l10N->t("Your appointment details have changed. Please review information below.")
                 ]));
@@ -991,7 +993,7 @@ class DavListener implements IEventListener
                 $this->l10N->t("%s Appointment update", [$org_name]), $mailVars));
             $tmpl->addHeading(" ");
             if (!$this->customBody($tmpl, $settings, BackendUtils::MAILUPDATEDHTML, $mailVars)) {
-                $tmpl->addBodyText(...$this->formatEmailBodyHtml([$this->l10N->t("Dear %s,", [$to_name])]));
+                $tmpl->addBodyText(...$this->formatEmailBodyHtml([$mailVars['salutation']]));
                 $tmpl->addBodyText(...$this->formatEmailBodyHtml([
                     $this->l10N->t("Your appointment details have changed. Please review information below.")
                 ]));
@@ -1132,7 +1134,7 @@ class DavListener implements IEventListener
             return;
         }
 
-        $this->finalizeEmailText($tmpl, $cnl_lnk_url);
+        $this->finalizeEmailText($tmpl, $cnl_lnk_url, $settings, $mailVars);
 
         ///-------------------
 
@@ -1282,7 +1284,8 @@ class DavListener implements IEventListener
                     $to_email, $org_email, $org_phone,
                     $evt_dt, $evt->DTEND->getDateTime(), $utz_info, $organizerL10n,
                     isset($evt->LOCATION) ? $evt->LOCATION->getValue() : '',
-                    $this->getPhoneFromDescription($om_info)
+                    $this->getPhoneFromDescription($om_info),
+                    $doc !== null && $doc->attendeeNameMissing
                 );
                 $orgVars['status'] = $om_prefix;
                 $tmpl->setSubject($this->customSubject($settings, BackendUtils::MAILORGANIZERSUBJECT,
@@ -1330,6 +1333,8 @@ class DavListener implements IEventListener
                             : 'N/A')
                     ));
                 }
+
+                $this->appendSharedMailFooter($tmpl, $settings, $orgVars);
 
                 $msg = $mailer->createMessage();
                 $msg->setFrom(array(\OCP\Util::getDefaultEmailAddress('appointments-noreply')));
@@ -1618,7 +1623,24 @@ class DavListener implements IEventListener
     }
 
 
-    function finalizeEmailText(EMailTemplate $tmpl, $cnl_lnk_url)
+    /**
+     * Footer shared across all email types, without exposing action buttons.
+     * It is sanitized and supports the same variables as custom email HTML.
+     */
+    private function appendSharedMailFooter(
+        IEMailTemplate $template, array $settings, array $vars
+    ): void {
+        $footer = trim((string)($settings[BackendUtils::MAILFOOTERHTML] ?? ''));
+        if ($footer === '') {
+            return;
+        }
+        $footer = str_replace('{{confirmationButtons}}', '', $footer);
+        $this->appendCustomBodyFragment($template, $footer, $vars);
+    }
+
+    function finalizeEmailText(
+        EMailTemplate $tmpl, $cnl_lnk_url, array $settings, array $mailVars
+    ): void
     {
 
         $tmpl->addBodyText(...$this->formatEmailBodyHtml([$this->l10N->t("Thank you")]));
@@ -1634,6 +1656,10 @@ class DavListener implements IEventListener
                 $this->l10N->t('To cancel your appointment please visit: %s', [$cnl_lnk_url])
             ]));
         }
+
+        // Place the shared legal notice after the actions, before Nextcloud's
+        // built-in product footer.
+        $this->appendSharedMailFooter($tmpl, $settings, $mailVars);
 
         $theme = new \OCP\Defaults();
         // TRANSLATORS %s is the server name. Example: Booked via Private Cloud Appointments

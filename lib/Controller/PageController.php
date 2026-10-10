@@ -984,7 +984,9 @@ class PageController extends Controller
             }
         }
 
-        if ($post['name'] === '') {
+        // Preserve anonymity separately from the calendar's placeholder name.
+        $post['_name_missing'] = $post['name'] === '';
+        if ($post['_name_missing']) {
             $post['name'] = $this->l->t('Guest');
         }
         $post['name'] = htmlspecialchars(strip_tags($post['name']), ENT_NOQUOTES);
