@@ -76,7 +76,7 @@ export default class SettingsService2 {
 				cancelSource.token.reason.message === CANCEL_MSG) {
 				console.debug("cancelled", cancelSource)
 			} else {
-				showError(t('appointments', "Error: check console"))
+				console.error('Appointments: caladd HTTP/network error', err)
 			}
 			return null
 		}).finally(() => {

@@ -4,47 +4,47 @@ import axios from "@nextcloud/axios";
 import {showError} from "@nextcloud/dialogs";
 
 export async function getTimezone(pageId, calId) {
-
-	let userTz = 'Europe/London' // default(fallback)
 	const service = new SettingsService2()
-	return service.getCalendarTimezone(pageId, calId).then(res => {
-		if (res !== null && res.data && res.data.toLowerCase() !== 'utc') {
-			// we have a user timezone
-			userTz = res.data.trim()
+	try {
+		const res = await service.getCalendarTimezone(pageId, calId)
+		if (res === null || typeof res.data !== 'string' || res.data.trim() === '') {
+			throw new Error('Calendar timezone could not be determined')
 		}
-		return axios.get(linkTo('appointments', 'ajax/zones.js'))
-	}).then(res => {
-		if (res.status === 200) {
-			let tzd = res.data
-			if (typeof tzd === "object"
-				&& tzd.hasOwnProperty('aliases')
-				&& tzd.hasOwnProperty('zones')) {
 
-				let tzs = ""
-				if (tzd.zones[userTz] !== undefined) {
-					tzs = tzd.zones[userTz].ics.join("\r\n")
-
-				} else if (tzd.aliases[userTz] !== undefined) {
-					let alias = tzd.aliases[userTz].aliasTo
-					if (tzd.zones[alias] !== undefined) {
-						userTz = alias
-						tzs = tzd.zones[alias].ics.join("\r\n")
-					}
-				}
-				return {
-					name: userTz,
-					data: "BEGIN:VTIMEZONE\r\nTZID:" + userTz + "\r\n" + tzs.trim() + "\r\nEND:VTIMEZONE"
-				}
-			} else {
-				throw new Error("bad tzr.data")
-			}
-		} else {
-			throw new Error("bad status: " + res.status)
+		let userTz = res.data.trim()
+		if (userTz.toUpperCase() === 'UTC') {
+			return {name: 'UTC', data: 'UTC'}
 		}
-	}).catch(err => {
+
+		const zonesResponse = await axios.get(linkTo('appointments', 'ajax/zones.js'))
+		if (zonesResponse.status !== 200
+			|| typeof zonesResponse.data !== 'object'
+			|| !zonesResponse.data
+			|| !zonesResponse.data.zones
+			|| !zonesResponse.data.aliases) {
+			throw new Error('Bad timezone database response')
+		}
+
+		const tzData = zonesResponse.data
+		let zone = tzData.zones[userTz]
+		if (zone === undefined && tzData.aliases[userTz] !== undefined) {
+			userTz = tzData.aliases[userTz].aliasTo
+			zone = tzData.zones[userTz]
+		}
+		if (!zone || !Array.isArray(zone.ics) || zone.ics.length === 0) {
+			throw new Error('Timezone is not available: ' + userTz)
+		}
+
+		return {
+			name: userTz,
+			data: "BEGIN:VTIMEZONE\r\nTZID:" + userTz
+				+ "\r\n" + zone.ics.join("\r\n").trim()
+				+ "\r\nEND:VTIMEZONE"
+		}
+	} catch (err) {
 		console.error('getTimezone error:', err)
 		return null
-	})
+	}
 }
 
 export function parsePageUrls(urlsData) {

@@ -1,6 +1,8 @@
 OC.L10N.register(
     "appointments",
     {
+    "Unexpected response from calendar server" : "Unerwartete Antwort des Kalenderservers",
+    "Cannot add appointment slots: {reason}" : "Terminslots konnten nicht erstellt werden: {reason}",
     "Required field" : "Pflichtfeld",
     "Required" : "Pflichtfeld",
     "Optional" : "Optional",
