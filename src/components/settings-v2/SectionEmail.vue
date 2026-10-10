@@ -28,8 +28,7 @@ const contribInterceptor = () => {
 
 const emailPlaceholders = [
     {key: 'salutation', description: t('appointments', 'Localized greeting with attendee name')},
-    {key: 'name', description: t('appointments', 'Full name of the attendee')},
-    {key: 'firstName', description: t('appointments', 'First name of the attendee')},
+    {key: 'name', description: t('appointments', 'Name exactly as entered in the booking form')},
     {key: 'email', description: t('appointments', 'Email address of the attendee')},
     {key: 'attendeePhone', description: t('appointments', 'Phone number of the attendee, if provided')},
     {key: 'date', description: t('appointments', 'Appointment date in the recipient language')},
@@ -46,8 +45,9 @@ const emailPlaceholders = [
 ]
 
 const confirmationButtonsHelp = t('appointments', 'Place {{confirmationButtons}} on its own line between HTML blocks in the booking request template to choose where the original buttons appear. Without the marker, the buttons are appended automatically.')
+const namePlaceholderHelp = t('appointments', 'Use {{name}} for the name exactly as entered. First and last names cannot be determined reliably from one field.')
 
-const emailExample = '<p>Hallo ' + '{' + '{firstName}' + '}' + ',</p> <p>Dein Termin ist am ' + '{' + '{date}' + '}' + ' um ' + '{' + '{time}' + '}' + ' Uhr.</p>'
+const emailExample = '<p>Hallo ' + '{' + '{name}' + '}' + ',</p> <p>Dein Termin ist am ' + '{' + '{date}' + '}' + ' um ' + '{' + '{time}' + '}' + ' Uhr.</p>'
 
 const cancelPendingOptions = [
 	{value: 0, label: t('appointments', 'No auto-cancel')},
@@ -159,6 +159,7 @@ const cancelPendingOptions = [
 		</ComboInput>
 		<LabelAccordion :label="t('appointments', 'Custom email templates')" :accordion="true">
             <p class="email-vars-intro">{{ t('appointments', 'Placeholders are replaced automatically in email subjects and HTML bodies. Write them exactly as shown:') }}</p>
+            <p class="email-vars-intro">{{ namePlaceholderHelp }}</p>
             <p class="email-vars-intro">{{ t('appointments', 'Images in email HTML support HTTPS URLs. Mail clients may block images until recipients allow them.') }}</p>
             <div class="email-vars-list">
                 <div v-for="item in emailPlaceholders" :key="item.key" class="email-vars-row">

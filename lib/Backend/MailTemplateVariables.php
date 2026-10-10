@@ -25,14 +25,16 @@ final class MailTemplateVariables
         string $location = '',
         string $attendeePhone = ''
     ): array {
-        $names = preg_split('/\s+/u', trim($name), 2);
-        $firstName = is_array($names) && isset($names[0]) ? $names[0] : $name;
+        // The booking form contains a single free-text name field. Do not try
+        // to guess first names or family names from its contents.
 
         [$date, $time, $endTime] = self::formatParts($start, $end, $timeZone, $l10n);
 
         return [
             'name' => $name,
-            'firstName' => $firstName,
+            // Backwards compatibility with HTML templates saved before 2.8.5.10:
+            // the legacy placeholder now means the exact entered name too.
+            'firstName' => $name,
             'salutation' => $l10n->t('Dear %s,', [$name]),
             'email' => $attendeeEmail,
             'attendeePhone' => $attendeePhone,

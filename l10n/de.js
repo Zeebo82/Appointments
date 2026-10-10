@@ -1,6 +1,8 @@
 OC.L10N.register(
     "appointments",
     {
+    "Name exactly as entered in the booking form" : "Name genau wie im Buchungsformular eingegeben",
+    "Use {{name}} for the name exactly as entered. First and last names cannot be determined reliably from one field." : "Verwende {{name}} für den unverändert eingegebenen Namen. Vor- und Nachname lassen sich aus einem einzigen Feld nicht zuverlässig erkennen.",
     "Images: use HTTPS URLs or local paths starting with /. Allowed: src, alt, title, width, height, loading. Images removed on previous saves must be added again." : "Bilder: HTTPS-URLs oder lokale Pfade, die mit / beginnen. Erlaubt: src, alt, title, width, height, loading. Beim früheren Speichern entfernte Bilder bitte erneut einfügen.",
     "Images in email HTML support HTTPS URLs. Mail clients may block images until recipients allow them." : "Bilder in HTML-E-Mails können über HTTPS eingebunden werden. E-Mail-Programme können externe Bilder zunächst blockieren.",
     "Original Confirm and Cancel buttons (booking request and confirmation reminder only)" : "Originalschaltflächen „Bestätigen“ und „Absagen“ (nur Buchungsanfrage und Bestätigungserinnerung)",
