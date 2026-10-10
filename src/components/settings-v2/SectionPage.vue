@@ -39,6 +39,16 @@ const prefillInputsOptions = [
 	// {value: 2, label: t('appointments', 'From User Profile (if logged-in)')},
 	// {value: 3, label: t('appointments', 'Query String or User Profile')},
 ]
+const fieldModes = [
+    {value: 'required', label: t('appointments', 'Required')},
+    {value: 'optional', label: t('appointments', 'Optional')},
+    {value: 'hidden', label: t('appointments', 'Hidden')},
+]
+const phoneFieldModes = [
+    {value: 'legacy', label: t('appointments', 'Follow existing phone visibility setting')},
+    ...fieldModes,
+]
+
 const prefilledTypeOptions = [
 	{value: 0, label: t('appointments', 'Regular Inputs (default)')},
 	{value: 1, label: t('appointments', 'Readonly / Plain Text')},
@@ -68,11 +78,39 @@ const handlePreviewClick = () => {
 		<LabelAccordion :label="t('appointments', 'Custom booking page texts (HTML)')" :accordion="true">
 			<ComboInput type="textarea" prop-name="pageIntroHtml" :label="t('appointments', 'Above form')" :store="settingsStore"/>
 			<ComboInput type="textarea" prop-name="pageOutroHtml" :label="t('appointments', 'Below form')" :store="settingsStore"/>
+            <ComboInput type="textarea" prop-name="pageBeforeOrganizationHtml" :label="t('appointments', 'Above organization name (inside form)')" :store="settingsStore"/>
+            <ComboInput type="textarea" prop-name="pageBeforeFormTitleHtml" :label="t('appointments', 'Above form title (inside form)')" :store="settingsStore"/>
+            <ComboInput type="textarea" prop-name="pageBeforeBookingButtonHtml" :label="t('appointments', 'Above booking button')" :store="settingsStore"/>
+            <ComboInput type="textarea" prop-name="pageAfterBookingButtonHtml" :label="t('appointments', 'Below booking button')" :store="settingsStore"/>
 			<ComboInput type="textarea" prop-name="pagePendingHtml" :label="t('appointments', 'Pending confirmation')" :store="settingsStore"/>
 			<ComboInput type="textarea" prop-name="pageConfirmedHtml" :label="t('appointments', 'Appointment confirmed')" :store="settingsStore"/>
 			<ComboInput type="textarea" prop-name="pageCancelledHtml" :label="t('appointments', 'Appointment cancelled')" :store="settingsStore"/>
 		</LabelAccordion>
-		<LabelAccordion :label="t('appointments', 'Booking form labels')" :accordion="true">
+		<LabelAccordion :label="t('appointments', 'Public page standard texts')" :accordion="true">
+            <p>{{ t('appointments', 'Leave empty to use the normal translation.') }}</p>
+            <ComboInput prop-name="textNoAppointments" :label="t('appointments', 'No appointments available')" :store="settingsStore"/>
+            <ComboInput prop-name="textDateTimePlaceholder" :label="t('appointments', 'Date/time placeholder')" :store="settingsStore"/>
+            <ComboInput prop-name="textNamePlaceholder" :label="t('appointments', 'Name placeholder')" :store="settingsStore"/>
+            <ComboInput prop-name="textEmailPlaceholder" :label="t('appointments', 'Email placeholder')" :store="settingsStore"/>
+            <ComboInput prop-name="textPhonePlaceholder" :label="t('appointments', 'Phone placeholder')" :store="settingsStore"/>
+            <ComboInput prop-name="textDuration" :label="t('appointments', 'Duration label')" :store="settingsStore"/>
+            <ComboInput prop-name="textSelectDateTime" :label="t('appointments', 'Date/time picker title')" :store="settingsStore"/>
+            <ComboInput prop-name="textSessionTimeout" :label="t('appointments', 'Session timeout message')" :store="settingsStore"/>
+            <ComboInput prop-name="textNameRequired" :label="t('appointments', 'Name validation message')" :store="settingsStore"/>
+            <ComboInput prop-name="textEmailRequired" :label="t('appointments', 'Email validation message')" :store="settingsStore"/>
+            <ComboInput prop-name="textPhoneRequired" :label="t('appointments', 'Phone validation message')" :store="settingsStore"/>
+            <ComboInput prop-name="textRequired" :label="t('appointments', 'Required-field message')" :store="settingsStore"/>
+            <ComboInput prop-name="textNumberRequired" :label="t('appointments', 'Number validation message')" :store="settingsStore"/>
+            <ComboInput prop-name="textThankYou" :label="t('appointments', 'Thank-you text')" :store="settingsStore"/>
+            <ComboInput prop-name="textErrorHeading" :label="t('appointments', 'Error heading')" :store="settingsStore"/>
+            <ComboInput prop-name="textTryAgainLater" :label="t('appointments', 'Try-again message')" :store="settingsStore"/>
+            <ComboInput prop-name="textContactUs" :label="t('appointments', 'Contact-us message')" :store="settingsStore"/>
+            <ComboInput prop-name="textMeetingType" :label="t('appointments', 'Meeting type label')" :store="settingsStore"/>
+            <ComboInput prop-name="textMeetingPlaceholder" :label="t('appointments', 'Meeting type placeholder')" :store="settingsStore"/>
+            <ComboInput prop-name="textInPerson" :label="t('appointments', 'In-person choice')" :store="settingsStore"/>
+            <ComboInput prop-name="textOnline" :label="t('appointments', 'Online choice')" :store="settingsStore"/>
+        </LabelAccordion>
+        <LabelAccordion :label="t('appointments', 'Booking form labels')" :accordion="true">
 			<ComboInput prop-name="formNameLabel" :label="t('appointments', 'Name')" :store="settingsStore"/>
 			<ComboInput prop-name="formEmailLabel" :label="t('appointments', 'Email')" :store="settingsStore"/>
 			<ComboInput prop-name="formPhoneLabel" :label="t('appointments', 'Phone')" :store="settingsStore"/>
@@ -107,7 +145,12 @@ const handlePreviewClick = () => {
 					:store="settingsStore"/>
 		</div>
 
-		<ComboCheckbox
+		<LabelAccordion :label="t('appointments', 'Field visibility and validation')" :accordion="true">
+            <ComboSelect prop-name="nameFieldMode" :label="t('appointments', 'Name field')" :options="fieldModes" default-value="required" :store="settingsStore"/>
+            <ComboSelect prop-name="phoneFieldMode" :label="t('appointments', 'Phone field')" :options="phoneFieldModes" default-value="legacy" :store="settingsStore"/>
+            <p>{{ t('appointments', 'Email and date/time must stay required for booking and confirmation. A missing optional name is stored as Guest in the calendar.') }}</p>
+        </LabelAccordion>
+        <ComboCheckbox
 				prop-name="hidePhone"
 				:label="t('appointments', 'Hide phone number field')"
 				:store="settingsStore"/>

@@ -395,14 +395,14 @@ class StateController extends Controller
     private function getValidator(string $prop): ?\Closure
     {
         return match ($prop) {
-            BackendUtils::MAILBOOKINGHTML, BackendUtils::MAILCONFIRMEDHTML, BackendUtils::MAILCANCELLEDHTML, BackendUtils::MAILUPDATEDHTML, BackendUtils::MAILREMINDERHTML, BackendUtils::MAILORGANIZERHTML, BackendUtils::PAGEINTROHTML, BackendUtils::PAGEOUTROHTML, BackendUtils::PAGEPENDINGHTML, BackendUtils::PAGECONFIRMEDHTML, BackendUtils::PAGECANCELLEDHTML => function (&$value, $pageId, $key): array {
+            BackendUtils::MAILBOOKINGHTML, BackendUtils::MAILCONFIRMEDHTML, BackendUtils::MAILCANCELLEDHTML, BackendUtils::MAILUPDATEDHTML, BackendUtils::MAILREMINDERHTML, BackendUtils::MAILORGANIZERHTML, BackendUtils::PAGEINTROHTML, BackendUtils::PAGEOUTROHTML, BackendUtils::PAGEPENDINGHTML, BackendUtils::PAGECONFIRMEDHTML, BackendUtils::PAGECANCELLEDHTML, BackendUtils::PAGEBEFOREORGHTML, BackendUtils::PAGEBEFOREFORMTITLEHTML, BackendUtils::PAGEBEFOREBUTTONHTML, BackendUtils::PAGEAFTERBUTTONHTML => function (&$value, $pageId, $key): array {
                 if (!is_string($value) || strlen($value) > 20000) {
                     return [Http::STATUS_BAD_REQUEST, ''];
                 }
                 $value = \OCA\Appointments\Backend\HtmlTemplate::sanitize($value);
                 return [Http::STATUS_OK, ''];
             },
-            BackendUtils::MAILBOOKINGSUBJECT, BackendUtils::MAILCONFIRMEDSUBJECT, BackendUtils::MAILCANCELLEDSUBJECT, BackendUtils::MAILUPDATEDSUBJECT, BackendUtils::MAILREMINDERSUBJECT, BackendUtils::MAILORGANIZERSUBJECT, BackendUtils::FORMNAMELABEL, BackendUtils::FORMEMAILLABEL, BackendUtils::FORMPHONELABEL, BackendUtils::FORMDATELABEL, BackendUtils::FORMBUTTONLABEL => function (&$value, $pageId, $key): array {
+            BackendUtils::MAILBOOKINGSUBJECT, BackendUtils::MAILCONFIRMEDSUBJECT, BackendUtils::MAILCANCELLEDSUBJECT, BackendUtils::MAILUPDATEDSUBJECT, BackendUtils::MAILREMINDERSUBJECT, BackendUtils::MAILORGANIZERSUBJECT, BackendUtils::FORMNAMELABEL, BackendUtils::FORMEMAILLABEL, BackendUtils::FORMPHONELABEL, BackendUtils::FORMDATELABEL, BackendUtils::FORMBUTTONLABEL, BackendUtils::TEXTNOAPPOINTMENTS, BackendUtils::TEXTDATETIMEPLACEHOLDER, BackendUtils::TEXTNAMEPLACEHOLDER, BackendUtils::TEXTEMAILPLACEHOLDER, BackendUtils::TEXTPHONEPLACEHOLDER, BackendUtils::TEXTDURATION, BackendUtils::TEXTSELECTDATETIME, BackendUtils::TEXTSESSIONTIMEOUT, BackendUtils::TEXTNAMEREQUIRED, BackendUtils::TEXTEMAILREQUIRED, BackendUtils::TEXTPHONEREQUIRED, BackendUtils::TEXTREQUIRED, BackendUtils::TEXTNUMBERREQUIRED, BackendUtils::TEXTTHANKYOU, BackendUtils::TEXTERRORHEADING, BackendUtils::TEXTTRYAGAIN, BackendUtils::TEXTCONTACTUS, BackendUtils::TEXTMEETINGTYPE, BackendUtils::TEXTMEETINGPLACEHOLDER, BackendUtils::TEXTINPERSON, BackendUtils::TEXTONLINE => function (&$value, $pageId, $key): array {
                 if (!is_string($value) || strlen($value) > 512) {
                     return [Http::STATUS_BAD_REQUEST, ''];
                 }
@@ -410,6 +410,16 @@ class StateController extends Controller
                 return [Http::STATUS_OK, ''];
             },
 
+            BackendUtils::NAMEFIELDMODE => function (&$value, $pageId, $key): array {
+                return is_string($value) && in_array($value, ['required', 'optional', 'hidden'], true)
+                    ? [Http::STATUS_OK, '']
+                    : [Http::STATUS_BAD_REQUEST, ''];
+            },
+            BackendUtils::PHONEFIELDMODE => function (&$value, $pageId, $key): array {
+                return is_string($value) && in_array($value, ['legacy', 'required', 'optional', 'hidden'], true)
+                    ? [Http::STATUS_OK, '']
+                    : [Http::STATUS_BAD_REQUEST, ''];
+            },
 
             BackendUtils::PAGE_ENABLED => function ($value, $pageId, $key): array {
                 if ($value === false) {
