@@ -1,4 +1,8 @@
 { "translations": {
+    "Hello," : "Hallo,",
+    "Shared email footer – HTML" : "Gemeinsamer E-Mail-Footer – HTML",
+    "Automatically appended to all Appointments emails for this booking page, including booking requests, confirmations, cancellations, changes, reminders and organizer notifications. Intended for legal notices, privacy information or contact details. Supports HTML and email placeholders." : "Wird automatisch an alle Appointments-E-Mails dieser Buchungsseite angehängt, einschließlich Buchungsanfragen, Bestätigungen, Absagen, Änderungen, Erinnerungen und Benachrichtigungen an Organisierende. Geeignet für rechtliche Hinweise, Datenschutzinformationen oder Kontaktdaten. Unterstützt HTML und E-Mail-Platzhalter.",
+    "If no name was entered, the name placeholder is empty and the greeting has no name." : "Wurde kein Name eingegeben, bleibt der Namensplatzhalter leer und die Anrede enthält keinen Namen.",
     "Name exactly as entered in the booking form" : "Name genau wie im Buchungsformular eingegeben",
     "Use {{name}} for the name exactly as entered. First and last names cannot be determined reliably from one field." : "Verwende {{name}} für den unverändert eingegebenen Namen. Vor- und Nachname lassen sich aus einem einzigen Feld nicht zuverlässig erkennen.",
     "Images: use HTTPS URLs or local paths starting with /. Allowed: src, alt, title, width, height, loading. Images removed on previous saves must be added again." : "Bilder: HTTPS-URLs oder lokale Pfade, die mit / beginnen. Erlaubt: src, alt, title, width, height, loading. Beim früheren Speichern entfernte Bilder bitte erneut einfügen.",

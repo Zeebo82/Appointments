@@ -83,6 +83,7 @@ export const useSettingsStore = defineStore('settings', {
 			mailReminderHtml: '',
 			mailOrganizerSubject: '',
 			mailOrganizerHtml: '',
+			mailFooterHtml: '',
 			cancelPendingHours: 0,
 			notifyCancelPending: false,
 

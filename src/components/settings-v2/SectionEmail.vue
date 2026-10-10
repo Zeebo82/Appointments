@@ -173,6 +173,7 @@ const cancelPendingOptions = [
             </p>
             <p class="email-vars-intro">{{ confirmationButtonsHelp }}</p>
             <p class="email-vars-intro">{{ t('appointments', 'Unavailable values are left blank. Confirmation buttons appear only in emails requiring a response.') }}</p>
+            <p class="email-vars-intro">{{ t('appointments', 'If no name was entered, the name placeholder is empty and the greeting has no name.') }}</p>
 			<ComboInput prop-name="mailBookingSubject" :label="t('appointments', 'Booking request – Subject')" :store="settingsStore"/>
 			<ComboInput type="textarea" prop-name="mailBookingHtml" :label="t('appointments', 'Booking request – HTML')" :store="settingsStore"/>
 			<ComboInput prop-name="mailConfirmedSubject" :label="t('appointments', 'Confirmation – Subject')" :store="settingsStore"/>
@@ -185,6 +186,15 @@ const cancelPendingOptions = [
 			<ComboInput type="textarea" prop-name="mailReminderHtml" :label="t('appointments', 'Reminder – HTML')" :store="settingsStore"/>
 			<ComboInput prop-name="mailOrganizerSubject" :label="t('appointments', 'Organizer notification – Subject')" :store="settingsStore"/>
 			<ComboInput type="textarea" prop-name="mailOrganizerHtml" :label="t('appointments', 'Organizer notification – HTML')" :store="settingsStore"/>
+            <ComboInput
+                    type="textarea"
+                    prop-name="mailFooterHtml"
+                    :label="t('appointments', 'Shared email footer – HTML')"
+                    :store="settingsStore">
+                <template #help>
+                    {{ t('appointments', 'Automatically appended to all Appointments emails for this booking page, including booking requests, confirmations, cancellations, changes, reminders and organizer notifications. Intended for legal notices, privacy information or contact details. Supports HTML and email placeholders.') }}
+                </template>
+            </ComboInput>
 		</LabelAccordion>
 	</div>
 </template>
