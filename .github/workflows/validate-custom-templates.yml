@@ -1,0 +1,49 @@
+name: Validate Appointments custom templates
+on:
+  push:
+    branches:
+      - feature/custom-html-text-templates
+  pull_request:
+    paths:
+      - '**.php'
+      - 'src/**'
+      - 'package*.json'
+      - '.github/workflows/validate-custom-templates.yml'
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Lint PHP sources
+        run: |
+          find lib appinfo templates -name '*.php' -print0 | xargs -0 -n 1 php -l
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Build Vue assets
+        run: npm run build
+
+      - name: Create installable Appointments ZIP
+        run: |
+          set -euo pipefail
+          mkdir -p dist/appointments
+          cp -a ajax appinfo css img js l10n lib templates COPYING CHANGELOG.md dist/appointments/
+          test -s dist/appointments/js/script.js
+          test -s dist/appointments/js/form.js
+          test -s dist/appointments/js/cncf.js
+          test -f dist/appointments/appinfo/info.xml
+          (cd dist && zip -qr appointments-nextcloud-test.zip appointments)
+          unzip -l dist/appointments-nextcloud-test.zip | grep 'appointments/js/script.js'
+      - name: Upload installable ZIP
+        uses: actions/upload-artifact@v4
+        with:
+          name: appointments-nextcloud-test
+          path: dist/appointments-nextcloud-test.zip
+          if-no-files-found: error
+          retention-days: 14

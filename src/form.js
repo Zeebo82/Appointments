@@ -18,6 +18,7 @@
 			f.autocomplete = "on"
 		}, 1000)
 
+		markCustomRequiredFields()
 		const pso = makePso(f.getAttribute("data-pps"))
 		prefillFields(pso)
 		makeDpu(pso)
@@ -41,6 +42,26 @@
 			b.disabled = true;
 			b.textContent = txt
 		}, 900000)
+	}
+
+	function markCustomRequiredFields() {
+		const container = document.getElementById('srgdev-ncfp-main-inputs')
+		if (!container) return
+
+		const fields = container.querySelectorAll('input[data-more="r1"], textarea[data-more="r1"], select[data-more="r1"]')
+		const labels = Array.from(container.querySelectorAll('label[for]'))
+		for (const field of fields) {
+			field.setAttribute('aria-required', 'true')
+			field.setAttribute('aria-describedby', 'srgdev-ncfp-required-note')
+			const label = labels.find(item => item.htmlFor === field.id)
+			if (label && !label.querySelector('.srgdev-ncfp-required-marker')) {
+				const marker = document.createElement('span')
+				marker.className = 'srgdev-ncfp-required-marker'
+				marker.setAttribute('aria-hidden', 'true')
+				marker.textContent = ' *'
+				label.appendChild(marker)
+			}
+		}
 	}
 
 	function resetForm(evt) {
@@ -140,13 +161,7 @@
 	function formSubmit(e) {
 		let lee = 0
 
-		const translations = {}
-		const trStr = document.getElementById("srgdev-ncfp_frm").getAttribute("data-translations")
-		// trStr looks something like this "key1:translation1,key2:transaltion2,..."
-		trStr.split(',').forEach(ps => {
-			const pair = ps.split(":")
-			translations[pair[0]] = pair[1]
-		})
+		const translations = JSON.parse(document.getElementById("srgdev-ncfp_frm").getAttribute("data-translations") || '{}')
 
 		let el = document.getElementById("srgdev-ncfp_fbtn")
 		if (el.disabled === true) {
@@ -179,7 +194,8 @@
 		}
 
 		el = document.getElementById("srgdev-ncfp_fname")
-		if (el.value.length < 2) {
+		if (el !== null && ((el.getAttribute('data-field-mode') === 'required' && el.value.trim().length < 2)
+			|| (el.value.trim() !== '' && el.value.trim().length < 2))) {
 			el.setCustomValidity(translations['name_required']);
 			el.addEventListener("input", clearFormErr, false)
 			if (lee === 0) el.reportValidity()
@@ -195,7 +211,8 @@
 		// Phone field is optional
 		// match [0-9], '.()-+,/' and ' ' (space) at least 9 digits
 		el = document.getElementById("srgdev-ncfp_fphone")
-		if (el !== null && (el.value === '' || el.value.length < 9 || /^[0-9 .()\-+,/]*$/.test(el.value) === false)) {
+		if (el !== null && ((el.getAttribute('data-field-mode') === 'required' && el.value.trim() === '')
+			|| (el.value.trim() !== '' && (el.value.length < 9 || /^[0-9 .()\-+,/]*$/.test(el.value) === false)))) {
 			el.setCustomValidity(translations['phone_required']);
 			el.addEventListener("input", clearFormErr, false)
 			if (lee === 0) el.reportValidity()

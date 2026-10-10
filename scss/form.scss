@@ -30,6 +30,24 @@ body {
   width: 100%;
 }
 
+// User-configured HTML content belongs above or below the entire booking form,
+// not inline next to it. Match the form's approximate width and text alignment.
+.srgdev-ncfp-page-html {
+  display: block;
+  box-sizing: border-box;
+  width: calc(100% - 2em);
+  max-width: 25em;
+  padding: 0 1.5em;
+  margin: 1em auto;
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+
+.srgdev-ncfp-page-html--below {
+  margin-top: 0;
+  margin-bottom: 2em;
+}
+
 .srgdev-appt-info-cont,
 .srgdev-ncfp-form {
   display: inline-block;
@@ -39,6 +57,31 @@ body {
   border: 1px solid var(--color-border);
   text-align: left;
   vertical-align: top;
+}
+
+.srgdev-ncfp-required-marker {
+  color: var(--color-error, #c00);
+  font-weight: 700;
+}
+
+.srgdev-ncfp-required-note {
+  display: block;
+  box-sizing: border-box;
+  width: calc(100% - 2em);
+  max-width: 25em;
+  padding: 0 1.5em;
+  margin: 0 auto 1.5em;
+  font-size: .875em;
+  line-height: 1.4;
+  text-align: left;
+  color: var(--color-text-maxcontrast, #666);
+}
+
+.srgdev-ncfp-in-form-html {
+  display: block;
+  width: 100%;
+  margin: 1em 0;
+  overflow-wrap: anywhere;
 }
 
 .srgdev-ncfp-form-org {

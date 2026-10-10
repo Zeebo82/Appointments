@@ -92,6 +92,8 @@ const editor = reactive({
 	menuIndex: -1,
 	simpleLen: 0,
 	simpleTs: 0,
+	saving: false,
+	error: '',
 	modalData: null,
 	infoModal: {
 		type: MODAL.NONE,
@@ -123,10 +125,14 @@ onMounted(() => {
 		const service = new SettingsService2()
 		service.getCalendarWeek(props.data.pageId, pd).then((res) => {
 			if (res === null) {
-				state.error = t('appointments', 'error: cannot load calendar data');
-			} else {
+				editor.error = t('appointments', 'error: cannot load calendar data')
+			} else if (typeof res.data === 'string' && res.data.length > 0) {
 				gridMaker.addPastAppts(pd + String.fromCharCode(31) + res.data, props.data.calColor)
 			}
+		}).catch((err) => {
+			console.error('Appointments: cannot load calendar week', err)
+			editor.error = t('appointments', 'error: cannot load calendar data')
+		}).finally(() => {
 			editor.loading = false
 		})
 	}
@@ -137,20 +143,47 @@ const close = () => {
 	emit('hide-timeslot-editor')
 }
 
-const handleAddToCalendar = () => {
+const handleAddToCalendar = async () => {
+	if (editor.saving || editor.loading || editor.error) return
+
 	const tsa = gridMaker.getStarEnds(props.data.week, props.data.tz === 'UTC')
-	new SettingsService2().addSimpleAppointments({
-		d: tsa.join(','),
-		tz: props.data.tz,
-		p: props.data.pageId
-	}).then(res => {
+	if (tsa.length < 3) {
+		showError(t('appointments', 'Please add time slots first.'))
+		return
+	}
+
+	editor.saving = true
+	try {
+		const res = await new SettingsService2().addSimpleAppointments({
+			d: tsa.join(','),
+			tz: props.data.tz,
+			p: props.data.pageId
+		})
 		if (res === null) {
 			showError(t('appointments', "Can't add appointments to calendar"))
-		} else {
-			showSuccess(t('appointments', "Appointments added to {calendarName} calendar", {calendarName: props.data.calName}))
-			close()
+			return
 		}
-	})
+
+		// The backend returns "0|i|c" for success, or "1:reason|i|c" for failure.
+		const reply = typeof res.data === 'string' ? res.data.trim() : ''
+		if (!/^0\|\d+\|\d+$/.test(reply)) {
+			console.error('Appointments: caladd rejected request:', res.status, res.data)
+			const backendReason = /^1:([^|]+)/.exec(reply)?.[1] ?? ''
+			const reason = backendReason
+				? backendReason.substring(0, 240)
+				: t('appointments', 'Unexpected response from calendar server')
+			showError(t('appointments', 'Cannot add appointment slots: {reason}', {reason}))
+			return
+		}
+
+		showSuccess(t('appointments', "Appointments added to {calendarName} calendar", {calendarName: props.data.calName}))
+		close()
+	} catch (err) {
+		console.error('Appointments: unexpected error when adding simple appointments', err)
+		showError(t('appointments', "Can't add appointments to calendar"))
+	} finally {
+		editor.saving = false
+	}
 }
 
 const saveTemplate = () => {
@@ -219,7 +252,7 @@ const gridApptsCopy = (index) => {
 	<div class="srgdev-appt-grid-flex">
 		<div v-show="gridMode===gridMaker.MODE_SIMPLE"
 				 class="srgdev-appt-cal-view-btns">
-			<button @click="handleAddToCalendar" class="primary">
+			<button @click="handleAddToCalendar" :disabled="editor.saving || editor.loading || !!editor.error" class="primary">
 				{{ t('appointments', 'Add to Calendar') }}
 			</button>
 			<button @click="close">
@@ -251,7 +284,10 @@ const gridApptsCopy = (index) => {
 			</div>
 		</div>
 		<div v-if="editor.loading===true" class="editor-loading">
-			Loading...
+			{{ t('appointments', 'Loading...') }}
+		</div>
+		<div v-else-if="editor.error" class="editor-loading" role="alert">
+			{{ editor.error }}
 		</div>
 		<div class="srgdev-appt-grid-flex-lower"
 				 :class="{'editor-hidden':editor.loading===true}">

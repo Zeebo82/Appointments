@@ -134,6 +134,20 @@ const cancelPendingOptions = [
 				{{ t('appointments', "This text will be appended to the end of the event's 'DESCRIPTION' property. Do NOT use HTML here, as most apps do NOT render it.") }}
 			</template>
 		</ComboInput>
+		<LabelAccordion :label="t('appointments', 'Custom email templates')" :accordion="true">
+			<ComboInput prop-name="mailBookingSubject" :label="t('appointments', 'Booking request – Subject')" :store="settingsStore"/>
+			<ComboInput type="textarea" prop-name="mailBookingHtml" :label="t('appointments', 'Booking request – HTML')" :store="settingsStore"/>
+			<ComboInput prop-name="mailConfirmedSubject" :label="t('appointments', 'Confirmation – Subject')" :store="settingsStore"/>
+			<ComboInput type="textarea" prop-name="mailConfirmedHtml" :label="t('appointments', 'Confirmation – HTML')" :store="settingsStore"/>
+			<ComboInput prop-name="mailCancelledSubject" :label="t('appointments', 'Cancellation – Subject')" :store="settingsStore"/>
+			<ComboInput type="textarea" prop-name="mailCancelledHtml" :label="t('appointments', 'Cancellation – HTML')" :store="settingsStore"/>
+			<ComboInput prop-name="mailUpdatedSubject" :label="t('appointments', 'Appointment changes – Subject')" :store="settingsStore"/>
+			<ComboInput type="textarea" prop-name="mailUpdatedHtml" :label="t('appointments', 'Appointment changes – HTML')" :store="settingsStore"/>
+			<ComboInput prop-name="mailReminderSubject" :label="t('appointments', 'Reminder – Subject')" :store="settingsStore"/>
+			<ComboInput type="textarea" prop-name="mailReminderHtml" :label="t('appointments', 'Reminder – HTML')" :store="settingsStore"/>
+			<ComboInput prop-name="mailOrganizerSubject" :label="t('appointments', 'Organizer notification – Subject')" :store="settingsStore"/>
+			<ComboInput type="textarea" prop-name="mailOrganizerHtml" :label="t('appointments', 'Organizer notification – HTML')" :store="settingsStore"/>
+		</LabelAccordion>
 	</div>
 </template>
 
