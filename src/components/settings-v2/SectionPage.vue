@@ -65,6 +65,21 @@ const handlePreviewClick = () => {
 				:label="t('appointments', 'Form Title')"
 				:store="settingsStore"/>
 
+		<LabelAccordion :label="t('appointments', 'Custom booking page texts (HTML)')" :accordion="true">
+			<ComboInput type="textarea" prop-name="pageIntroHtml" :label="t('appointments', 'Above form')" :store="settingsStore"/>
+			<ComboInput type="textarea" prop-name="pageOutroHtml" :label="t('appointments', 'Below form')" :store="settingsStore"/>
+			<ComboInput type="textarea" prop-name="pagePendingHtml" :label="t('appointments', 'Pending confirmation')" :store="settingsStore"/>
+			<ComboInput type="textarea" prop-name="pageConfirmedHtml" :label="t('appointments', 'Appointment confirmed')" :store="settingsStore"/>
+			<ComboInput type="textarea" prop-name="pageCancelledHtml" :label="t('appointments', 'Appointment cancelled')" :store="settingsStore"/>
+		</LabelAccordion>
+		<LabelAccordion :label="t('appointments', 'Booking form labels')" :accordion="true">
+			<ComboInput prop-name="formNameLabel" :label="t('appointments', 'Name')" :store="settingsStore"/>
+			<ComboInput prop-name="formEmailLabel" :label="t('appointments', 'Email')" :store="settingsStore"/>
+			<ComboInput prop-name="formPhoneLabel" :label="t('appointments', 'Phone')" :store="settingsStore"/>
+			<ComboInput prop-name="formDateLabel" :label="t('appointments', 'Date & time')" :store="settingsStore"/>
+			<ComboInput prop-name="formButtonLabel" :label="t('appointments', 'Booking button')" :store="settingsStore"/>
+		</LabelAccordion>
+
 		<ComboSelect
 				prop-name="nbrWeeks"
 				default-value="1"

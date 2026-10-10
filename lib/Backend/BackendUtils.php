@@ -93,6 +93,18 @@ class BackendUtils
     public const EML_VLD_TXT = 'vldNote';
     public const EML_CNF_TXT = 'cnfNote';
     public const EML_ICS_TXT = 'icsNote';
+    public const MAILBOOKINGSUBJECT = 'mailBookingSubject';
+    public const MAILBOOKINGHTML = 'mailBookingHtml';
+    public const MAILCONFIRMEDSUBJECT = 'mailConfirmedSubject';
+    public const MAILCONFIRMEDHTML = 'mailConfirmedHtml';
+    public const MAILCANCELLEDSUBJECT = 'mailCancelledSubject';
+    public const MAILCANCELLEDHTML = 'mailCancelledHtml';
+    public const MAILUPDATEDSUBJECT = 'mailUpdatedSubject';
+    public const MAILUPDATEDHTML = 'mailUpdatedHtml';
+    public const MAILREMINDERSUBJECT = 'mailReminderSubject';
+    public const MAILREMINDERHTML = 'mailReminderHtml';
+    public const MAILORGANIZERSUBJECT = 'mailOrganizerSubject';
+    public const MAILORGANIZERHTML = 'mailOrganizerHtml';
     public const EML_CANCEL_PENDING_HOURS = 'cancelPendingHours';
     public const EML_NOTIFY_BEFORE_CANCEL_PENDING = 'notifyCancelPending';
 
@@ -153,6 +165,16 @@ class BackendUtils
     public const PSN_PREFILL_INPUTS = "prefillInputs";
     public const PSN_PREFILLED_TYPE = "prefilledType";
     public const PSN_FORM_FINISH_TEXT = "formFinishText";
+    public const PAGEINTROHTML = 'pageIntroHtml';
+    public const PAGEOUTROHTML = 'pageOutroHtml';
+    public const PAGEPENDINGHTML = 'pagePendingHtml';
+    public const PAGECONFIRMEDHTML = 'pageConfirmedHtml';
+    public const PAGECANCELLEDHTML = 'pageCancelledHtml';
+    public const FORMNAMELABEL = 'formNameLabel';
+    public const FORMEMAILLABEL = 'formEmailLabel';
+    public const FORMPHONELABEL = 'formPhoneLabel';
+    public const FORMDATELABEL = 'formDateLabel';
+    public const FORMBUTTONLABEL = 'formButtonLabel';
 
     public const PAGES_ENABLED = "enabled";
     public const PAGES_LABEL = "label";
@@ -1198,6 +1220,18 @@ class BackendUtils
             self::EML_VLD_TXT => "",
             self::EML_CNF_TXT => "",
             self::EML_ICS_TXT => "",
+            self::MAILBOOKINGSUBJECT => "",
+            self::MAILBOOKINGHTML => "",
+            self::MAILCONFIRMEDSUBJECT => "",
+            self::MAILCONFIRMEDHTML => "",
+            self::MAILCANCELLEDSUBJECT => "",
+            self::MAILCANCELLEDHTML => "",
+            self::MAILUPDATEDSUBJECT => "",
+            self::MAILUPDATEDHTML => "",
+            self::MAILREMINDERSUBJECT => "",
+            self::MAILREMINDERHTML => "",
+            self::MAILORGANIZERSUBJECT => "",
+            self::MAILORGANIZERHTML => "",
             self::EML_CANCEL_PENDING_HOURS => 0,
             self::EML_NOTIFY_BEFORE_CANCEL_PENDING => false,
 
@@ -1223,6 +1257,16 @@ class BackendUtils
             // 0=show as regular inputs, 1=disable prefilled, 2=hide prefilled
             self::PSN_PREFILLED_TYPE => 0,
             self::PSN_FORM_FINISH_TEXT => '',
+            self::PAGEINTROHTML => "",
+            self::PAGEOUTROHTML => "",
+            self::PAGEPENDINGHTML => "",
+            self::PAGECONFIRMEDHTML => "",
+            self::PAGECANCELLEDHTML => "",
+            self::FORMNAMELABEL => "",
+            self::FORMEMAILLABEL => "",
+            self::FORMPHONELABEL => "",
+            self::FORMDATELABEL => "",
+            self::FORMBUTTONLABEL => "",
 
             self::KEY_TMPL_DATA => [[], [], [], [], [], [], []],
             self::KEY_TMPL_INFO => [
