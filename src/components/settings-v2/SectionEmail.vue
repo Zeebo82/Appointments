@@ -44,6 +44,8 @@ const emailPlaceholders = [
     {key: 'status', description: t('appointments', 'Appointment status (organizer notification only)')},
 ]
 
+const emailExample = '<p>Hallo ' + '{' + '{firstName}' + '}' + ',</p> <p>Dein Termin ist am ' + '{' + '{date}' + '}' + ' um ' + '{' + '{time}' + '}' + ' Uhr.</p>'
+
 const cancelPendingOptions = [
 	{value: 0, label: t('appointments', 'No auto-cancel')},
 	{value: 2, label: t('appointments', '2 hours')},
@@ -156,13 +158,13 @@ const cancelPendingOptions = [
             <p class="email-vars-intro">{{ t('appointments', 'Placeholders are replaced automatically in email subjects and HTML bodies. Write them exactly as shown:') }}</p>
             <div class="email-vars-list">
                 <div v-for="item in emailPlaceholders" :key="item.key" class="email-vars-row">
-                    <code>{{ '{{' + item.key + '}}' }}</code>
+                    <code>{{ '{' + '{' + item.key + '}' + '}' }}</code>
                     <span>{{ item.description }}</span>
                 </div>
             </div>
             <p class="email-vars-example">
                 {{ t('appointments', 'Example for an HTML email:') }}
-                <code>&lt;p&gt;Hallo {{ '{{firstName}}' }},&lt;/p&gt; &lt;p&gt;Dein Termin ist am {{ '{{date}}' }} um {{ '{{time}}' }} Uhr.&lt;/p&gt;</code>
+                <code>{{ emailExample }}</code>
             </p>
             <p class="email-vars-intro">{{ t('appointments', 'Unavailable values are left blank. Confirmation and cancellation buttons are added automatically when applicable.') }}</p>
 			<ComboInput prop-name="mailBookingSubject" :label="t('appointments', 'Booking request – Subject')" :store="settingsStore"/>
