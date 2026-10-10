@@ -1,6 +1,9 @@
 OC.L10N.register(
     "appointments",
     {
+    "Original Confirm and Cancel buttons (booking request and confirmation reminder only)" : "Originalschaltflächen „Bestätigen“ und „Absagen“ (nur Buchungsanfrage und Bestätigungserinnerung)",
+    "Place {{confirmationButtons}} on its own line between HTML blocks in the booking request template to choose where the original buttons appear. Without the marker, the buttons are appended automatically." : "Platziere {{confirmationButtons}} in einer eigenen Zeile zwischen HTML-Blöcken der Buchungsanfrage, um die Position der Originalschaltflächen festzulegen. Ohne den Platzhalter werden die Schaltflächen automatisch angefügt.",
+    "Unavailable values are left blank. Confirmation buttons appear only in emails requiring a response." : "Nicht verfügbare Angaben bleiben leer. Bestätigungsschaltflächen erscheinen nur in E-Mails, die eine Antwort erfordern.",
     "Localized greeting with attendee name" : "Übersetzte Anrede mit dem Namen der buchenden Person",
     "Full name of the attendee" : "Vollständiger Name der buchenden Person",
     "First name of the attendee" : "Vorname der buchenden Person",

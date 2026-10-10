@@ -45,4 +45,23 @@ $html = HtmlTemplate::render('<p>{{name}}</p>', $vars);
 assertHas('&lt;script&gt;', $html);
 assertHas('{{email}}', $html);
 if (str_contains($html, '<script>')) throw new RuntimeException('unsafe HTML');
-echo "mail variable smoke tests passed\n";
+// Original buttons are a distinct rendering action, not user-supplied HTML.
+$parts = HtmlTemplate::splitOnConfirmationButtons(
+    '<p>Hallo {{firstName}},</p>{{confirmationButtons}}<p>Bitte bestätigen.</p>'
+);
+assert($parts === ['<p>Hallo {{firstName}},</p>', '<p>Bitte bestätigen.</p>']);
+assert(HtmlTemplate::splitOnConfirmationButtons('<p>Keine Aktionen</p>') === null);
+
+// Multiple markers may only insert the native action group once.
+$parts = HtmlTemplate::splitOnConfirmationButtons(
+    'Vorher {{confirmationButtons}} Nachher {{confirmationButtons}}'
+);
+assert($parts === ['Vorher ', ' Nachher ']);
+
+// A user-controlled placeholder VALUE must not turn into actionable markup.
+$vars['name'] = '{{confirmationButtons}}';
+$raw = '<p>{{name}}</p>';
+assert(HtmlTemplate::splitOnConfirmationButtons($raw) === null);
+assertHas('{{confirmationButtons}}', HtmlTemplate::render($raw, $vars));
+
+echo "mail variable and action button smoke tests passed\n";

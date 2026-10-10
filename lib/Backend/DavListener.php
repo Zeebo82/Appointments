@@ -396,8 +396,32 @@ class DavListener implements IEventListener
                 ? $this->l10N->t("Reminder: please confirm your %s appointment", [$org_name])
                 : $this->l10N->t("%s appointment reminder", [$org_name]);
             $tmpl->setSubject($this->customSubject($settings, BackendUtils::MAILREMINDERSUBJECT, $subject, $mailVars));
+
+            // Cancellation reminders can also contain the native Confirm / Cancel
+            // buttons. Determine their URLs before rendering custom HTML.
+            $reminderButtons = null;
+            $reminderButtonsInserted = false;
+            $reminderActionsAvailable = $remInfo['actions'] && (
+                $doc->embed ||
+                filter_var($config->getSystemValue('overwrite.cli.url'), FILTER_VALIDATE_URL) !== false
+            );
+            if ($reminderActionsAvailable && $remType === BackendUtils::REMINDER_TYPE_CANCEL_NOTICE) {
+                list($btn_url, $btn_tkn) = $this->makeBtnInfo(
+                    $userId, $pageId, $doc->embed, $evtUri, $appConfig
+                );
+                $reminderButtons = [
+                    $this->l10N->t("Confirm"),
+                    $btn_url . '1' . $btn_tkn,
+                    $this->l10N->t("Cancel"),
+                    $btn_url . '0' . $btn_tkn
+                ];
+            }
+
             $tmpl->addHeading(" ");
-            if (!$this->customBody($tmpl, $settings, BackendUtils::MAILREMINDERHTML, $mailVars)) {
+            if (!$this->customBody(
+                $tmpl, $settings, BackendUtils::MAILREMINDERHTML, $mailVars,
+                $reminderButtons, $reminderButtonsInserted
+            )) {
                 $tmpl->addBodyText(...$this->formatEmailBodyHtml([$this->l10N->t("Dear %s,", [$to_name])]));
                 if ($remType === BackendUtils::REMINDER_TYPE_CANCEL_NOTICE) {
                     $confirmWindow = $settings[BackendUtils::EML_CANCEL_PENDING_HOURS] - max(1, floor($remInfo['seconds'] / 3600));
@@ -452,13 +476,11 @@ class DavListener implements IEventListener
                             }
                         }
                     } else {
-                        // add confirm cancel buttons
-                        $tmpl->addBodyButtonGroup(
-                            $this->l10N->t("Confirm"),
-                            $btn_url . '1' . $btn_tkn,
-                            $this->l10N->t("Cancel"),
-                            $btn_url . '0' . $btn_tkn
-                        );
+                        // If the custom reminder HTML placed the buttons at its
+                        // marker, do not append them a second time.
+                        if (!$reminderButtonsInserted && $reminderButtons !== null) {
+                            $tmpl->addBodyButtonGroup(...$reminderButtons);
+                        }
                     }
 
                 } else {
@@ -774,25 +796,35 @@ class DavListener implements IEventListener
             // TRANSLATORS Subject for email, Ex: {{Organization Name}} Appointment (action needed)
             $tmpl->setSubject($this->customSubject($settings, BackendUtils::MAILBOOKINGSUBJECT,
                 $this->l10N->t("%s appointment (action needed)", [$org_name]), $mailVars));
+            // Prepare the original Nextcloud action buttons before rendering custom HTML,
+            // so {{confirmationButtons}} can position them between two HTML fragments.
+            list($btn_url, $btn_tkn) = $this->makeBtnInfo(
+                $userId, $pageId, $embed,
+                $objectData['uri'],
+                $appConfig);
+            $bookingButtons = [
+                $this->l10N->t("Confirm"),
+                $btn_url . '1' . $btn_tkn,
+                $this->l10N->t("Cancel"),
+                $btn_url . '0' . $btn_tkn
+            ];
+            $bookingButtonsInserted = false;
+
             $tmpl->addHeading(" ");
-            if (!$this->customBody($tmpl, $settings, BackendUtils::MAILBOOKINGHTML, $mailVars)) {
+            if (!$this->customBody(
+                $tmpl, $settings, BackendUtils::MAILBOOKINGHTML, $mailVars,
+                $bookingButtons, $bookingButtonsInserted
+            )) {
                 $tmpl->addBodyText(...$this->formatEmailBodyHtml([$this->l10N->t("Dear %s,", [$to_name])]));
                 $tmpl->addBodyText(...$this->formatEmailBodyHtml([
                     $this->l10N->t('The %1$s appointment scheduled for %2$s is awaiting your confirmation.', [$org_name, $date_time])
                 ]));
             }
 
-            list($btn_url, $btn_tkn) = $this->makeBtnInfo(
-                $userId, $pageId, $embed,
-                $objectData['uri'],
-                $appConfig);
-
-            $tmpl->addBodyButtonGroup(
-                $this->l10N->t("Confirm"),
-                $btn_url . '1' . $btn_tkn,
-                $this->l10N->t("Cancel"),
-                $btn_url . '0' . $btn_tkn
-            );
+            // Preserve the current safe default for templates without a marker.
+            if (!$bookingButtonsInserted) {
+                $tmpl->addBodyButtonGroup(...$bookingButtons);
+            }
 
             if (empty($settings[BackendUtils::MAILBOOKINGHTML]) && !empty($settings[BackendUtils::EML_VLD_TXT])) {
                 $this->addMoreEmailText($tmpl, $settings[BackendUtils::EML_VLD_TXT]);
@@ -1514,15 +1546,57 @@ class DavListener implements IEventListener
         return trim(html_entity_decode(strip_tags(HtmlTemplate::render($settings[$key], $vars)), ENT_QUOTES | ENT_HTML5, 'UTF-8'));
     }
 
-    private function customBody(IEMailTemplate $template, array $settings, string $key, array $vars): bool
-    {
-        if (trim($settings[$key] ?? '') === '') return false;
-        $html = HtmlTemplate::render($settings[$key], $vars);
+    /**
+     * The optional {{confirmationButtons}} marker controls where Nextcloud's
+     * native two-button group is inserted. Templates without the marker keep
+     * the original button placement after the body. No user-defined URLs are
+     * trusted for these actions.
+     */
+    private function customBody(
+        IEMailTemplate $template,
+        array $settings,
+        string $key,
+        array $vars,
+        ?array $confirmationButtons = null,
+        bool &$buttonsInserted = false
+    ): bool {
+        $raw = trim($settings[$key] ?? '');
+        if ($raw === '') {
+            return false;
+        }
+
+        $parts = $confirmationButtons !== null
+            ? HtmlTemplate::splitOnConfirmationButtons($raw)
+            : null;
+        if ($parts !== null) {
+            $this->appendCustomBodyFragment($template, $parts[0], $vars);
+            $template->addBodyButtonGroup(...$confirmationButtons);
+            $buttonsInserted = true;
+            $this->appendCustomBodyFragment($template, $parts[1], $vars);
+        } else {
+            // A reminder without available confirmation actions must not show
+            // a literal template marker.
+            $this->appendCustomBodyFragment(
+                $template, str_replace('{{confirmationButtons}}', '', $raw), $vars
+            );
+        }
+        return true;
+    }
+
+    private function appendCustomBodyFragment(
+        IEMailTemplate $template, string $raw, array $vars
+    ): void {
+        if (trim($raw) === '') {
+            return;
+        }
+        $html = HtmlTemplate::render($raw, $vars);
+        if (trim($html) === '') {
+            return;
+        }
         $plain = trim(html_entity_decode(strip_tags(str_ireplace(
             ['</p>', '</div>', '</li>', '<br>', '<br/>', '<br />'], "\n", $html)),
             ENT_QUOTES | ENT_HTML5, 'UTF-8'));
         $template->addBodyText(...$this->formatEmailBodyHtml([$html, $plain]));
-        return true;
     }
 
     private function getEmailTemplate()

@@ -17,6 +17,24 @@ final class HtmlTemplate
         return self::sanitize(strtr($html, $replacements));
     }
 
+    /**
+     * Split custom email HTML around a single native action-button position.
+     * Additional occurrences are ignored to prevent duplicate action links.
+     * Splitting happens before variable interpolation, so names and other
+     * attendee-supplied values can never produce executable button markers.
+     *
+     * @return array{string, string}|null
+     */
+    public static function splitOnConfirmationButtons(string $html): ?array
+    {
+        $marker = '{{confirmationButtons}}';
+        if (!str_contains($html, $marker)) {
+            return null;
+        }
+        [$before, $after] = explode($marker, $html, 2);
+        return [$before, str_replace($marker, '', $after)];
+    }
+
     public static function sanitize(string $html): string
     {
         if ($html === '') return '';
